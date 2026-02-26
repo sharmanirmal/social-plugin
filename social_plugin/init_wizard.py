@@ -52,7 +52,7 @@ def run_init_wizard() -> Path:
     # -------------------------------------------------------------------------
     # Step 1: Config directory
     # -------------------------------------------------------------------------
-    console.print("[bold cyan]Step 1/5:[/bold cyan] Config directory")
+    console.print("[bold cyan]Step 1/6:[/bold cyan] Config directory")
     console.print(f"  Config will be saved to: [green]{app_dir}[/green]")
 
     if app_dir.exists() and (app_dir / "config.yaml").exists():
@@ -67,7 +67,7 @@ def run_init_wizard() -> Path:
     # -------------------------------------------------------------------------
     # Step 2: AI Provider
     # -------------------------------------------------------------------------
-    console.print("[bold cyan]Step 2/5:[/bold cyan] AI Provider")
+    console.print("[bold cyan]Step 2/6:[/bold cyan] AI Provider")
     console.print("  Which AI provider do you want to use?")
     console.print("    [green]1[/green] Anthropic Claude (claude-sonnet-4-5-20250929)")
     console.print("    [green]2[/green] OpenAI GPT (gpt-4o)")
@@ -93,7 +93,7 @@ def run_init_wizard() -> Path:
     # -------------------------------------------------------------------------
     # Step 3: Twitter/X API (optional)
     # -------------------------------------------------------------------------
-    console.print("[bold cyan]Step 3/5:[/bold cyan] Twitter/X API (optional)")
+    console.print("[bold cyan]Step 3/6:[/bold cyan] Twitter/X API (optional)")
     twitter_enabled = click.confirm("  Do you have Twitter/X API keys?", default=False)
 
     twitter_keys: dict[str, str] = {}
@@ -107,9 +107,27 @@ def run_init_wizard() -> Path:
     console.print()
 
     # -------------------------------------------------------------------------
-    # Step 4: Content Topics
+    # Step 4: Local Documents Folder
     # -------------------------------------------------------------------------
-    console.print("[bold cyan]Step 4/5:[/bold cyan] Content Topics")
+    console.print("[bold cyan]Step 4/6:[/bold cyan] Local Documents Folder")
+    console.print("  Path to a folder with your reference docs (txt, md, pdf, docx, csv).")
+
+    while True:
+        local_folder = click.prompt("  Folder path")
+        local_folder = local_folder.strip().strip("'\"")
+        local_path = Path(local_folder).expanduser().resolve()
+        if local_path.is_dir():
+            local_folder = str(local_path)
+            break
+        console.print(f"  [red]Directory not found: {local_path}[/red]")
+
+    console.print(f"  [green]Using: {local_folder}[/green]")
+    console.print()
+
+    # -------------------------------------------------------------------------
+    # Step 5: Content Topics
+    # -------------------------------------------------------------------------
+    console.print("[bold cyan]Step 5/6:[/bold cyan] Content Topics")
     primary_topic = click.prompt("  Primary topic", default="Physical AI and Robotics")
 
     kw_input = click.prompt(
@@ -127,9 +145,9 @@ def run_init_wizard() -> Path:
     console.print()
 
     # -------------------------------------------------------------------------
-    # Step 5: Verify & Initialize
+    # Step 6: Verify & Initialize
     # -------------------------------------------------------------------------
-    console.print("[bold cyan]Step 5/5:[/bold cyan] Verify & Initialize")
+    console.print("[bold cyan]Step 6/6:[/bold cyan] Verify & Initialize")
 
     # Test API key if provided
     if api_key:
@@ -186,7 +204,7 @@ def run_init_wizard() -> Path:
         "sources": {
             "google_docs": [],
             "pdfs": [],
-            "local_files": [],
+            "local_files": [local_folder],
             "media": [],
             "cache_ttl_hours": 24,
         },

@@ -5,4 +5,4 @@ try:
 
     __version__ = version("social-plugin")
 except Exception:
-    __version__ = "0.1.2"
+    __version__ = "0.1.3"
