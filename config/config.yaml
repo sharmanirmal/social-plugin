@@ -1,0 +1,74 @@
+# Social Plugin Configuration
+# See config.example.yaml for full documentation
+
+topics:
+  primary: "Physical AI and Robotics"
+  keywords:
+    - "physical AI"
+    - "robotics"
+    - "embodied AI"
+    - "humanoid robots"
+    - "sim-to-real"
+  hashtags:
+    twitter: ["#PhysicalAI", "#Robotics", "#EmbodiedAI", "#DexterityRobots"]
+    linkedin: ["#PhysicalAI", "#Robotics", "#AI"]
+
+accounts:
+  twitter:
+    enabled: true
+    api_tier: "pay-per-use"
+    max_posts_per_day: 2
+  linkedin:
+    enabled: true
+    auto_post: false
+    max_posts_per_day: 1
+
+sources:
+  google_docs: []            # Direct Google Doc links/IDs (require service account)
+  pdfs: []                   # Remote PDF URLs only (local PDFs go in local_files)
+  local_files: ["/Users/nirmal/Documents/social-plugin-doc"]            # Any local file: txt, md, csv, pdf, doc, docx
+  media: []
+  cache_ttl_hours: 24
+
+generation:
+  model: "claude-sonnet-4-5-20250929"
+  max_tokens: 4096
+  temperature: 0.7
+  default_tone: "informative, thought-provoking, professional"
+  tweet:
+    max_length: 280
+    count_per_run: 1
+    style: "concise insight with relevant hashtag"
+  linkedin_post:
+    max_length: 3000
+    count_per_run: 1
+    style: "thought-leadership, conversational, uses line breaks, ends with a question"
+
+safety:
+  profanity_filter: true
+  blocked_words: []
+  compliance_note: "No financial advice, no medical claims"
+
+notifications:
+  slack:
+    enabled: false
+    webhook_url_env: "SLACK_WEBHOOK_URL"
+    channel: "#social-content"
+  cli: true
+
+trends:
+  rss_feeds:
+    - "https://news.google.com/rss/search?q=physical+AI+robotics"
+    - "https://news.google.com/rss/search?q=physical+AI+robotics+site:twitter.com"
+    - "https://news.google.com/rss/search?q=physical+AI+robotics+site:linkedin.com"
+    - "https://feeds.feedburner.com/IeeeSpectrum"
+  max_results: 20
+
+database:
+  path: "data/social_plugin.db"
+
+logging:
+  level: "INFO"
+  file: "data/logs/social_plugin.log"
+  max_size_mb: 10
+  backup_count: 5

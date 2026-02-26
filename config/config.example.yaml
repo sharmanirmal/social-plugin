@@ -1,0 +1,117 @@
+# =============================================================================
+# Social Plugin — Example Configuration
+# =============================================================================
+# Copy this file to config/config.yaml and customize.
+# Secrets go in .env (see .env.example).
+
+# --- Topics ---
+# Define what you post about. Keywords are used for trend relevance scoring.
+topics:
+  primary: "Physical AI and Robotics"
+  keywords:
+    - "physical AI"
+    - "robotics"
+    - "embodied AI"
+    - "humanoid robots"
+    - "sim-to-real"
+  hashtags:
+    twitter: ["#PhysicalAI", "#Robotics", "#EmbodiedAI"]
+    linkedin: ["#PhysicalAI", "#Robotics", "#AI"]
+
+# --- Accounts ---
+# Which platforms to generate content for and posting limits.
+accounts:
+  twitter:
+    enabled: true
+    api_tier: "pay-per-use"                 # X API is pay-per-use as of 2025
+    max_posts_per_day: 1
+  linkedin:
+    enabled: true
+    auto_post: false                       # Set to true when LinkedIn Developer app is ready
+    max_posts_per_day: 1
+
+# --- Content Sources ---
+# Direct links to reference material. NOT folder-based — each source is explicit.
+sources:
+  # Google Docs — share each doc with your service account email
+  google_docs:
+    - id: "1aBcDeFgHiJkLmNoPqRsTuVwXyZ"
+      name: "Weekly AI Briefing"
+    - url: "https://docs.google.com/document/d/xxx/edit"
+      name: "Research Notes"
+
+  # Remote PDFs only (URLs) — local PDFs go in local_files
+  pdfs:
+    - url: "https://arxiv.org/pdf/xxxx.pdf"
+      name: "ArXiv Paper"
+
+  # Local files — supports txt, md, csv, pdf, doc, docx
+  local_files:
+    - path: "/Users/you/notes/ai-thoughts.md"
+    - path: "/Users/you/Documents/robotics-paper.pdf"
+      name: "Robotics Paper"
+    - path: "/Users/you/Documents/research-brief.docx"
+      name: "Research Brief"
+
+  # Media attachments for posts
+  media:
+    - path: "/Users/you/media/robot-demo.png"
+      description: "Robot manipulation demo"
+    - drive_url: "https://drive.google.com/file/d/xxx"
+      description: "Lab photo"
+
+  cache_ttl_hours: 24                     # How long cached sources are considered fresh
+
+# --- Content Generation ---
+# Claude API settings for draft generation.
+generation:
+  model: "claude-sonnet-4-5-20250929"       # Claude model to use
+  max_tokens: 4096
+  temperature: 0.7                          # Higher = more creative, lower = more focused
+  default_tone: "informative, thought-provoking, professional"
+
+  tweet:
+    max_length: 280
+    count_per_run: 1
+    style: "concise insight with relevant hashtag"
+
+  linkedin_post:
+    max_length: 3000
+    count_per_run: 1
+    style: "thought-leadership, conversational, uses line breaks, ends with a question"
+
+# --- Content Safety ---
+# Filters applied to all generated content before saving as drafts.
+safety:
+  profanity_filter: true                   # Uses better-profanity library
+  blocked_words: []                        # Add custom words to block
+  compliance_note: "No financial advice, no medical claims"
+
+# --- Notifications ---
+notifications:
+  slack:
+    enabled: true
+    webhook_url_env: "SLACK_WEBHOOK_URL"   # Env var name containing the webhook URL
+    channel: "#social-content"
+  cli: true                                # Always show CLI output
+
+# --- Trend Discovery ---
+# RSS feeds for discovering trending topics. Google News RSS is free.
+trends:
+  rss_feeds:
+    - "https://news.google.com/rss/search?q=physical+AI+robotics"
+    - "https://news.google.com/rss/search?q=physical+AI+robotics+site:twitter.com"
+    - "https://news.google.com/rss/search?q=physical+AI+robotics+site:linkedin.com"
+    - "https://feeds.feedburner.com/IeeeSpectrum"
+  max_results: 20
+
+# --- Database ---
+database:
+  path: "data/social_plugin.db"            # SQLite file (entire state manager)
+
+# --- Logging ---
+logging:
+  level: "INFO"                            # DEBUG, INFO, WARNING, ERROR
+  file: "data/logs/social_plugin.log"
+  max_size_mb: 10
+  backup_count: 5
