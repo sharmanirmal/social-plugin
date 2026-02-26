@@ -47,8 +47,11 @@ def test_validate_warnings(monkeypatch):
     config = Config.load("/nonexistent/config.yaml")
     # Clear env after load (load_dotenv may set them from .env)
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
     monkeypatch.delenv("TWITTER_API_KEY", raising=False)
     warnings = config.validate()
+    # Default provider is anthropic, so should warn about ANTHROPIC_API_KEY
     assert any("ANTHROPIC_API_KEY" in w for w in warnings)
 
 

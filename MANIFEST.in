@@ -1,0 +1,5 @@
+include README.md
+include LICENSE
+include config/config.example.yaml
+include .env.example
+recursive-include social_plugin/templates *.yaml

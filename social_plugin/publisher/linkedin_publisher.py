@@ -31,9 +31,11 @@ class LinkedInPublisher:
         """Copy text to system clipboard."""
         try:
             if sys.platform == "darwin":
-                proc = subprocess.run(["pbcopy"], input=text.encode(), check=True)
+                subprocess.run(["pbcopy"], input=text.encode(), check=True)
+            elif sys.platform == "win32":
+                subprocess.run(["clip.exe"], input=text.encode("utf-16le"), check=True)
             elif sys.platform == "linux":
-                proc = subprocess.run(["xclip", "-selection", "clipboard"], input=text.encode(), check=True)
+                subprocess.run(["xclip", "-selection", "clipboard"], input=text.encode(), check=True)
             else:
                 logger.warning("Clipboard not supported on %s", sys.platform)
                 return False

@@ -6,13 +6,32 @@ build-backend = "setuptools.build_meta"
 name = "social-plugin"
 version = "0.1.0"
 description = "CLI tool for AI-powered social media content generation and publishing"
+readme = "README.md"
+license = "MIT"
 requires-python = ">=3.11"
+authors = [{name = "Nirmal Sharma"}]
+keywords = ["social-media", "ai", "cli", "content-generation", "twitter", "linkedin", "claude", "gpt", "gemini"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet",
+    "Topic :: Utilities",
+]
 dependencies = [
     "click>=8.1",
     "rich>=13.0",
     "pyyaml>=6.0",
     "python-dotenv>=1.0",
     "anthropic>=0.40",
+    "openai>=1.0",
+    "google-generativeai>=0.8",
     "tweepy>=4.14",
     "google-api-python-client>=2.100",
     "google-auth>=2.23",
@@ -34,10 +53,20 @@ dev = [
     "pytest>=7.4",
     "pytest-asyncio>=0.21",
     "pytest-mock>=3.11",
+    "build>=1.0",
+    "twine>=5.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/nirmalsharma/social-plugin"
+Repository = "https://github.com/nirmalsharma/social-plugin"
+Issues = "https://github.com/nirmalsharma/social-plugin/issues"
 
 [project.scripts]
 social-plugin = "social_plugin.cli:cli"
 
 [tool.setuptools.packages.find]
 include = ["social_plugin*"]
+
+[tool.setuptools.package-data]
+"social_plugin.templates" = ["*.yaml"]

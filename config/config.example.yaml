@@ -63,9 +63,13 @@ sources:
   cache_ttl_hours: 24                     # How long cached sources are considered fresh
 
 # --- Content Generation ---
-# Claude API settings for draft generation.
+# LLM settings for draft generation. Supports Anthropic Claude, OpenAI GPT, and Google Gemini.
+# Provider is auto-detected from model name if not set.
 generation:
-  model: "claude-sonnet-4-5-20250929"       # Claude model to use
+  provider: "anthropic"                   # "anthropic", "openai", or "google" (auto-detected if omitted)
+  model: "claude-sonnet-4-5-20250929"     # Anthropic: claude-sonnet-4-5-20250929, claude-opus-4-6
+                                          # OpenAI:    gpt-4o, gpt-4o-mini, o1, o3-mini
+                                          # Google:    gemini-2.0-flash, gemini-2.5-pro
   max_tokens: 4096
   temperature: 0.7                          # Higher = more creative, lower = more focused
   default_tone: "informative, thought-provoking, professional"

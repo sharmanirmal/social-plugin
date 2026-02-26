@@ -6,8 +6,19 @@ import os
 from pathlib import Path
 from typing import Any
 
+import click
 import yaml
 from dotenv import load_dotenv
+
+
+def get_app_dir() -> Path:
+    """Get the platform-specific application config directory.
+
+    - macOS: ~/Library/Application Support/social-plugin/
+    - Windows: C:\\Users\\<user>\\AppData\\Roaming\\social-plugin\\
+    - Linux: ~/.config/social-plugin/
+    """
+    return Path(click.get_app_dir("social-plugin"))
 
 
 _DEFAULT_CONFIG = {
@@ -25,6 +36,7 @@ _DEFAULT_CONFIG = {
     },
     "sources": {"google_docs": [], "pdfs": [], "local_files": [], "media": [], "cache_ttl_hours": 24},
     "generation": {
+        "provider": None,  # Auto-detected from model name if not set
         "model": "claude-sonnet-4-5-20250929",
         "max_tokens": 4096,
         "temperature": 0.7,
@@ -71,19 +83,37 @@ class Config:
 
     @classmethod
     def load(cls, config_path: str | Path | None = None) -> Config:
-        """Load config from YAML file, merging with defaults."""
-        project_root = Path.cwd()
+        """Load config from YAML file, merging with defaults.
 
-        # Load .env
+        Resolution order:
+        1. Explicit config_path argument (--config flag)
+        2. CWD ./config/config.yaml (development mode)
+        3. APP_DIR/config.yaml (installed mode)
+        """
+        if config_path is not None:
+            # Explicit path provided
+            config_path = Path(config_path)
+            project_root = config_path.parent.parent if config_path.parent.name == "config" else config_path.parent
+        else:
+            # Try CWD first (development mode)
+            cwd_config = Path.cwd() / "config" / "config.yaml"
+            app_dir_config = get_app_dir() / "config.yaml"
+
+            if cwd_config.exists():
+                config_path = cwd_config
+                project_root = Path.cwd()
+            elif app_dir_config.exists():
+                config_path = app_dir_config
+                project_root = get_app_dir()
+            else:
+                # No config found — use CWD as project root (defaults only)
+                config_path = cwd_config
+                project_root = Path.cwd()
+
+        # Load .env from same root as config
         env_path = project_root / ".env"
         if env_path.exists():
             load_dotenv(env_path)
-
-        # Find config file
-        if config_path is None:
-            config_path = project_root / "config" / "config.yaml"
-        else:
-            config_path = Path(config_path)
 
         user_config: dict = {}
         if config_path.exists():
@@ -153,11 +183,36 @@ class Config:
         """Get an environment variable."""
         return os.environ.get(key, default)
 
+    @property
+    def llm_provider(self) -> str:
+        """Get the effective LLM provider (explicit or auto-detected from model)."""
+        provider = self.get("generation.provider")
+        if provider:
+            return provider
+        model = self.get("generation.model", default="claude-sonnet-4-5-20250929")
+        if model.startswith("claude-"):
+            return "anthropic"
+        elif model.startswith(("gpt-", "o1", "o3")):
+            return "openai"
+        elif model.startswith("gemini-"):
+            return "google"
+        return "anthropic"
+
     def validate(self) -> list[str]:
         """Return a list of validation warnings."""
         warnings = []
-        if not self.env("ANTHROPIC_API_KEY"):
-            warnings.append("ANTHROPIC_API_KEY not set in environment")
+
+        # Check API key for the configured LLM provider
+        provider = self.llm_provider
+        provider_env_keys = {
+            "anthropic": "ANTHROPIC_API_KEY",
+            "openai": "OPENAI_API_KEY",
+            "google": "GOOGLE_API_KEY",
+        }
+        env_key = provider_env_keys.get(provider, "ANTHROPIC_API_KEY")
+        if not self.env(env_key):
+            warnings.append(f"{env_key} not set (required for {provider} provider)")
+
         if self.accounts.get("twitter", {}).get("enabled") and not self.env("TWITTER_API_KEY"):
             warnings.append("Twitter enabled but TWITTER_API_KEY not set")
         if self.notifications.get("slack", {}).get("enabled"):

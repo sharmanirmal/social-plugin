@@ -46,6 +46,76 @@ def cli(ctx, config_path: str | None):
     ctx.ensure_object(dict)
     ctx.obj["config_path"] = config_path
 
+    # First-run detection: if no config found and not running init/config/help
+    invoked = ctx.invoked_subcommand
+    if invoked not in ("init", "config", None):
+        from social_plugin.config import get_app_dir
+        from pathlib import Path
+
+        has_config = (
+            config_path is not None
+            or (Path.cwd() / "config" / "config.yaml").exists()
+            or (get_app_dir() / "config.yaml").exists()
+        )
+        if not has_config:
+            console.print("[yellow]No configuration found.[/yellow]")
+            console.print("Run [cyan]social-plugin init[/cyan] to set up your configuration.")
+            raise click.Abort()
+
+
+# =============================================================================
+# init
+# =============================================================================
+
+@cli.command("init")
+def init_cmd():
+    """Interactive setup wizard — creates config, .env, and database."""
+    from social_plugin.init_wizard import run_init_wizard
+    run_init_wizard()
+
+
+# =============================================================================
+# config
+# =============================================================================
+
+@cli.command("config")
+@click.option("--show", is_flag=True, help="Show config file paths and active provider")
+@click.pass_context
+def config_cmd(ctx, show: bool):
+    """Show configuration paths and settings."""
+    from social_plugin.config import get_app_dir
+    from pathlib import Path
+
+    config_path = ctx.obj.get("config_path")
+
+    app_dir = get_app_dir()
+    cwd_config = Path.cwd() / "config" / "config.yaml"
+    app_config = app_dir / "config.yaml"
+
+    console.print(Panel("[bold]Configuration Paths[/bold]", border_style="cyan"))
+    console.print(f"  App directory:     [cyan]{app_dir}[/cyan]")
+    console.print(f"  CWD config:        {'[green]exists' if cwd_config.exists() else '[dim]not found'}[/] {cwd_config}")
+    console.print(f"  App dir config:    {'[green]exists' if app_config.exists() else '[dim]not found'}[/] {app_config}")
+
+    # Show which config is active
+    if config_path:
+        console.print(f"  [bold]Active config:[/bold] [green]{config_path}[/green] (--config flag)")
+    elif cwd_config.exists():
+        console.print(f"  [bold]Active config:[/bold] [green]{cwd_config}[/green] (CWD)")
+    elif app_config.exists():
+        console.print(f"  [bold]Active config:[/bold] [green]{app_config}[/green] (app dir)")
+    else:
+        console.print("  [bold]Active config:[/bold] [yellow]none — run social-plugin init[/yellow]")
+
+    if show:
+        try:
+            config, _, _ = _init(config_path)
+            console.print(f"\n  [bold]Provider:[/bold] {config.llm_provider}")
+            console.print(f"  [bold]Model:[/bold] {config.get('generation.model')}")
+            console.print(f"  [bold]Database:[/bold] {config.db_path}")
+        except Exception:
+            pass
+
 
 # =============================================================================
 # fetch-trends
@@ -364,15 +434,16 @@ def review_draft(ctx, draft_id: str):
             console.print("[dim]Provide additional information or context to incorporate:[/dim]")
             extra_info = click.prompt("Additional info")
 
-            from social_plugin.generator.claude_client import ClaudeClient
+            from social_plugin.generator.llm_client import create_llm_client
             from social_plugin.generator.prompts import build_tweet_system_prompt, build_linkedin_system_prompt
             from social_plugin.drafts.models import Platform
 
             gen_cfg = config.generation
-            claude = ClaudeClient(
+            llm = create_llm_client(
                 model=gen_cfg.get("model", "claude-sonnet-4-5-20250929"),
                 max_tokens=gen_cfg.get("max_tokens", 4096),
                 temperature=gen_cfg.get("temperature", 0.7),
+                provider=gen_cfg.get("provider"),
             )
 
             tone = draft.tone or gen_cfg.get("default_tone", "")
@@ -389,7 +460,7 @@ def review_draft(ctx, draft_id: str):
             )
 
             console.print("[dim]Regenerating with added context...[/dim]")
-            result = claude.generate(system_prompt, user_prompt)
+            result = llm.generate(system_prompt, user_prompt)
             content = result.text.strip()
             dm.update_content(draft_id, content, draft.hashtags)
             draft = dm.get(draft_id)
@@ -869,13 +940,17 @@ def auth_check(ctx, platform: str):
     if platform in ("google", "all"):
         checks.append(("Google", _check_google))
 
-    # Check Anthropic API key
+    # Check LLM provider API key
     if platform == "all":
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        config, _, _ = _init(ctx.obj.get("config_path"))
+        provider = config.llm_provider
+        provider_env = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY", "google": "GOOGLE_API_KEY"}
+        env_key = provider_env.get(provider, "ANTHROPIC_API_KEY")
+        api_key = os.environ.get(env_key)
         if api_key:
-            console.print("[green]Anthropic API key: configured[/green]")
+            console.print(f"[green]{provider.title()} API key ({env_key}): configured[/green]")
         else:
-            console.print("[red]Anthropic API key: not set[/red]")
+            console.print(f"[red]{provider.title()} API key ({env_key}): not set[/red]")
 
     for name, check_fn in checks:
         try:

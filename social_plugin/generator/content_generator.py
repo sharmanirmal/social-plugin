@@ -8,7 +8,7 @@ from social_plugin.config import Config
 from social_plugin.db import Database
 from social_plugin.drafts.draft_manager import DraftManager
 from social_plugin.drafts.models import Draft, Platform
-from social_plugin.generator.claude_client import ClaudeClient
+from social_plugin.generator.llm_client import create_llm_client
 from social_plugin.generator.prompts import (
     build_linkedin_system_prompt,
     build_regen_prompt,
@@ -22,7 +22,7 @@ logger = get_logger()
 
 
 class ContentGenerator:
-    """Orchestrates content generation from trends and sources using Claude."""
+    """Orchestrates content generation from trends and sources using an LLM."""
 
     def __init__(self, config: Config, db: Database, draft_manager: DraftManager):
         self.config = config
@@ -30,10 +30,11 @@ class ContentGenerator:
         self.draft_manager = draft_manager
 
         gen_cfg = config.generation
-        self.claude = ClaudeClient(
-            model=gen_cfg.get("model", "claude-sonnet-4-5-20250514"),
+        self.llm = create_llm_client(
+            model=gen_cfg.get("model", "claude-sonnet-4-5-20250929"),
             max_tokens=gen_cfg.get("max_tokens", 4096),
             temperature=gen_cfg.get("temperature", 0.7),
+            provider=gen_cfg.get("provider"),
         )
 
         safety_cfg = config.safety
@@ -79,14 +80,14 @@ class ContentGenerator:
             sources=sources,
         )
 
-        result = self.claude.generate(system_prompt, user_prompt)
+        result = self.llm.generate(system_prompt, user_prompt)
 
         # Safety check
         safety_result = self.safety.check(result.text)
         if not safety_result.is_safe:
             logger.warning("Tweet draft failed safety: %s", safety_result.summary)
             if self.config.safety.get("profanity_filter", True):
-                result = self.claude.generate(
+                result = self.llm.generate(
                     system_prompt + "\n\nIMPORTANT: Avoid any profanity, vulgarity, or inappropriate language.",
                     user_prompt,
                 )
@@ -139,14 +140,14 @@ class ContentGenerator:
             sources=sources,
         )
 
-        result = self.claude.generate(system_prompt, user_prompt)
+        result = self.llm.generate(system_prompt, user_prompt)
 
         # Safety check
         safety_result = self.safety.check(result.text)
         if not safety_result.is_safe:
             logger.warning("LinkedIn draft failed safety: %s", safety_result.summary)
             if self.config.safety.get("profanity_filter", True):
-                result = self.claude.generate(
+                result = self.llm.generate(
                     system_prompt + "\n\nIMPORTANT: Avoid any profanity, vulgarity, or inappropriate language.",
                     user_prompt,
                 )
@@ -206,7 +207,7 @@ class ContentGenerator:
             system_prompt = build_linkedin_system_prompt(tone=new_tone)
 
         user_prompt = build_regen_prompt(draft.content, new_tone, platform_name)
-        result = self.claude.generate(system_prompt, user_prompt)
+        result = self.llm.generate(system_prompt, user_prompt)
 
         # Safety check
         safety_result = self.safety.check(result.text)
