@@ -29,7 +29,7 @@ social-plugin/
 ├── social_plugin/
 │   ├── cli.py                   # Click CLI — 17 commands (incl init, config)
 │   ├── config.py                # YAML loader with app-dir resolution + validation
-│   ├── init_wizard.py           # Interactive 5-step setup wizard
+│   ├── init_wizard.py           # Interactive 6-step setup wizard
 │   ├── db.py                    # SQLite schema (6 tables), CRUD helpers
 │   ├── auth/                    # twitter_auth, linkedin_auth, google_auth
 │   ├── trends/                  # RSS-based trend discovery (Google News + industry feeds)
@@ -44,7 +44,7 @@ social-plugin/
 │   ├── publisher/               # Twitter posting, LinkedIn clipboard, media upload
 │   ├── notifications/           # Slack webhook notifications
 │   ├── analytics/               # Engagement tracking, daily summaries, stats
-│   ├── templates/               # Bundled config template for init wizard
+│   ├── templates/               # Bundled templates (legacy config template)
 │   └── utils/                   # Logger (rotating file), retry (tenacity)
 ├── scripts/
 │   ├── install.sh               # macOS/Linux one-liner installer
@@ -209,7 +209,7 @@ git push --tags
 - **SQLite as state manager** — single file DB, zero config, queryable history
 - **RSS for trend discovery** — free, no API keys, works with Twitter pay-per-use model
 - **Cross-platform config paths** — `click.get_app_dir()` for installed mode, CWD for development
-- **Init wizard** — interactive setup for non-technical users, tests API key on the spot
+- **Init wizard** — interactive 6-step setup for non-technical users, includes mandatory local docs folder, tests API key on the spot
 - **Files and folders** — local_files supports individual paths or folder paths (auto-discovers supported files)
 - **Tone configurable per draft** — `regen` command re-generates with LLM using new tone
 - **Profanity filter** — better-profanity scans before saving drafts

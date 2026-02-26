@@ -18,7 +18,7 @@ pipx install social-plugin
 social-plugin init
 ```
 
-The `init` wizard walks you through choosing an AI provider, entering API keys, and configuring your topics.
+The `init` wizard walks you through choosing an AI provider, entering API keys, setting your local docs folder, and configuring your topics.
 
 ## Prerequisites
 
