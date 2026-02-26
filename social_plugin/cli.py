@@ -717,7 +717,7 @@ def post_content(ctx, all_approved: bool, draft_id: str | None, dry_run: bool):
 @click.option("--dry-run", is_flag=True, help="Run pipeline without saving/posting")
 @click.pass_context
 def run_all(ctx, dry_run: bool):
-    """Run full pipeline: fetch trends → fetch sources → generate drafts."""
+    """Run full pipeline: fetch trends -> fetch sources -> generate drafts."""
     config, db, dm = _init(ctx.obj.get("config_path"))
 
     run_id = db.start_run("full_pipeline")
