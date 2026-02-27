@@ -53,7 +53,7 @@ Create a {platform} post about Physical AI and Robotics.
 
 
 def build_tweet_system_prompt(
-    max_length: int = 4000,
+    max_length: int = 280,
     tone: str = "informative, thought-provoking, professional",
     hashtags: list[str] | None = None,
     compliance_note: str = "",
@@ -62,6 +62,11 @@ def build_tweet_system_prompt(
     if is_rewrite:
         length_note = (
             "Length is flexible — focus on delivering value over matching the original length"
+        )
+    elif max_length <= 280:
+        length_note = (
+            f"Stay within {max_length} characters (including hashtags). "
+            f"Be concise and impactful — every word counts"
         )
     else:
         length_note = (

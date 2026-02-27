@@ -215,7 +215,7 @@ def run_init_wizard() -> Path:
             "temperature": 0.7,
             "default_tone": "informative, thought-provoking, professional",
             "tweet": {
-                "max_length": 4000,
+                "max_length": 280,
                 "count_per_run": 1,
                 "style": "concise insight with relevant hashtag",
             },

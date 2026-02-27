@@ -76,6 +76,23 @@ class TwitterPublisher:
             return None
 
         text = draft.display_content
+        x_premium = self.config.accounts.get("twitter", {}).get("x_premium", False)
+        char_limit = 25000 if x_premium else 280
+
+        if len(text) > char_limit:
+            if x_premium:
+                logger.error(
+                    "Tweet (%d chars) exceeds X Premium limit (%d). Edit the draft to shorten it.",
+                    len(text), char_limit,
+                )
+            else:
+                logger.error(
+                    "Tweet (%d chars) exceeds 280-char limit. "
+                    "Either edit the draft to ≤280 chars, or set 'x_premium: true' in config "
+                    "accounts.twitter if you have X Premium (supports up to 25,000 chars).",
+                    len(text),
+                )
+            return None
 
         if dry_run:
             logger.info("[DRY RUN] Would post tweet: %s", text[:100])

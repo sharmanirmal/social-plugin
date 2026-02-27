@@ -17,6 +17,7 @@ accounts:
   twitter:
     enabled: true
     api_tier: "pay-per-use"
+    x_premium: false                   # Set true if your X account has Premium (enables long-form posts up to 25,000 chars)
     max_posts_per_day: 2
   linkedin:
     enabled: true
@@ -37,7 +38,7 @@ generation:
   temperature: 0.7
   default_tone: "informative, thought-provoking, professional"
   tweet:
-    max_length: 4000
+    max_length: 280
     count_per_run: 1
     style: "concise insight with relevant hashtag"
   linkedin_post:

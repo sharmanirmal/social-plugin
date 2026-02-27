@@ -18,9 +18,16 @@ def test_tweet_system_prompt():
 
 
 def test_tweet_system_prompt_default_length():
-    """Default tweet max_length is 4000, not 280."""
+    """Default tweet max_length is 280 (standard accounts)."""
     prompt = build_tweet_system_prompt(tone="professional")
-    assert "4000" in prompt
+    assert "280" in prompt
+    assert "concise" in prompt.lower()
+
+
+def test_tweet_system_prompt_long_form():
+    """Long-form tweet prompt for X Premium accounts."""
+    prompt = build_tweet_system_prompt(max_length=25000)
+    assert "25000" in prompt
     assert "200-600 characters" in prompt
 
 

@@ -65,8 +65,11 @@ class ContentGenerator:
         tone = tone or gen_cfg.get("default_tone", "informative, thought-provoking, professional")
         hashtags = topics_cfg.get("hashtags", {}).get("twitter", ["#PhysicalAI", "#Robotics"])
 
+        x_premium = self.config.accounts.get("twitter", {}).get("x_premium", False)
+        max_length = tweet_cfg.get("max_length", 25000 if x_premium else 280)
+
         system_prompt = build_tweet_system_prompt(
-            max_length=tweet_cfg.get("max_length", 4000),
+            max_length=max_length,
             tone=tone,
             hashtags=hashtags,
             compliance_note=self.config.safety.get("compliance_note", ""),
