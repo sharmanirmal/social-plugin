@@ -92,6 +92,28 @@ safety:
   blocked_words: []                        # Add custom words to block
   compliance_note: "No financial advice, no medical claims"
 
+# --- Content Rules ---
+# Define persistent DO's and DON'Ts that the AI follows during generation.
+# These defaults are built-in — customize or override as needed.
+# To use built-in defaults, omit this section entirely.
+# Note: Setting do: [] or dont: [] overrides the defaults (does not merge).
+rules:
+  do:
+    - "Include specific data points or statistics when available"
+    - "Reference the source or study when citing facts"
+    - "Write with a clear, authentic voice — not generic marketing speak"
+  dont:
+    - "Never use clickbait or sensationalist language"
+    - "Avoid generic hype phrases like 'revolutionize', 'game-changer', or 'disrupt'"
+    - "Don't start posts with 'Exciting news!' or similar clichés"
+
+# --- Style Examples ---
+# Paste 2-3 posts you like. The AI uses these as reference for your voice and style.
+# These are injected as few-shot examples during generation.
+style_examples:
+  - "Boston Dynamics' Atlas now does backflips off warehouse shelves. The gap between simulation and reality is closing faster than most realize. 3 years ago this was science fiction. #Robotics #PhysicalAI"
+  - "New paper from Toyota Research: their diffusion policy achieves 94% success on 10 manipulation tasks with just 50 demos each. The data efficiency gains in robot learning are compounding. https://arxiv.org/abs/example"
+
 # --- Notifications ---
 notifications:
   slack:

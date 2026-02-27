@@ -414,7 +414,8 @@ def review_draft(ctx, draft_id: str):
 
         # --- Approve ---
         if choice == 1:
-            dm.approve(draft_id)
+            notes = click.prompt("What did you like? (optional, helps improve future content)", default="", show_default=False)
+            dm.approve(draft_id, notes if notes.strip() else None)
             console.print(f"\n[green]Draft {draft_id} approved![/green]")
             console.print(f"[dim]Run: social-plugin post --id {draft_id}[/dim]")
             break
@@ -458,10 +459,12 @@ def review_draft(ctx, draft_id: str):
             )
 
             tone = draft.tone or gen_cfg.get("default_tone", "")
+            topic = config.topics.get("primary", "Physical AI and Robotics")
+            rules = config.rules
             if draft.platform == Platform.TWITTER:
-                system_prompt = build_tweet_system_prompt(tone=tone, is_rewrite=True)
+                system_prompt = build_tweet_system_prompt(tone=tone, is_rewrite=True, topic=topic, rules=rules)
             else:
-                system_prompt = build_linkedin_system_prompt(tone=tone)
+                system_prompt = build_linkedin_system_prompt(tone=tone, topic=topic, rules=rules)
 
             user_prompt = build_add_context_prompt(
                 draft.content, extra_info, draft.platform.value
@@ -523,7 +526,7 @@ def review_draft(ctx, draft_id: str):
 
         # --- Reject ---
         elif choice == 6:
-            notes = click.prompt("Rejection reason (optional)", default="", show_default=False)
+            notes = click.prompt("Rejection reason")
             dm.reject(draft_id, notes)
             console.print(f"[yellow]Draft {draft_id} rejected[/yellow]")
             break
@@ -540,12 +543,13 @@ def review_draft(ctx, draft_id: str):
 
 @cli.command("approve")
 @click.argument("draft_id")
+@click.option("--notes", "-n", default=None, help="What you liked about this draft (optional)")
 @click.pass_context
-def approve_draft(ctx, draft_id: str):
+def approve_draft(ctx, draft_id: str, notes: str | None):
     """Approve a pending draft for posting."""
     _, _, dm = _init(ctx.obj.get("config_path"))
 
-    if dm.approve(draft_id):
+    if dm.approve(draft_id, notes):
         console.print(f"[green]Draft {draft_id} approved[/green]")
     else:
         console.print(f"[red]Could not approve draft {draft_id} (not found or not pending)[/red]")
@@ -557,7 +561,7 @@ def approve_draft(ctx, draft_id: str):
 
 @cli.command("reject")
 @click.argument("draft_id")
-@click.option("--notes", "-n", default="", help="Rejection reason")
+@click.option("--notes", "-n", required=True, help="Rejection reason (required)")
 @click.pass_context
 def reject_draft(ctx, draft_id: str, notes: str):
     """Reject a pending draft."""

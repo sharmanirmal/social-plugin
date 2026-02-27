@@ -63,3 +63,25 @@ def test_properties():
     assert isinstance(config.accounts, dict)
     assert isinstance(config.sources, dict)
     assert isinstance(config.safety, dict)
+
+
+def test_rules_property_defaults():
+    """Config returns default rules with DO and DON'T lists."""
+    config = Config.load("/nonexistent/config.yaml")
+    rules = config.rules
+    assert isinstance(rules, dict)
+    assert "do" in rules
+    assert "dont" in rules
+    assert len(rules["do"]) >= 1
+    assert len(rules["dont"]) >= 1
+    # Check that defaults are sensible
+    assert any("data points" in r.lower() for r in rules["do"])
+    assert any("clickbait" in r.lower() for r in rules["dont"])
+
+
+def test_style_examples_property_defaults():
+    """Config returns empty style_examples by default."""
+    config = Config.load("/nonexistent/config.yaml")
+    examples = config.style_examples
+    assert isinstance(examples, list)
+    assert len(examples) == 0

@@ -44,8 +44,8 @@ class DraftManager:
     def list_approved(self) -> list[Draft]:
         return self.list_by_status(DraftStatus.APPROVED)
 
-    def approve(self, draft_id: str) -> bool:
-        """Approve a pending or failed draft."""
+    def approve(self, draft_id: str, notes: str | None = None) -> bool:
+        """Approve a pending or failed draft with optional positive notes."""
         draft = self.get(draft_id)
         if draft is None:
             logger.error("Draft %s not found", draft_id)
@@ -53,7 +53,10 @@ class DraftManager:
         if draft.status not in (DraftStatus.PENDING, DraftStatus.FAILED):
             logger.warning("Draft %s is %s, cannot approve", draft_id, draft.status.value)
             return False
-        self.db.update_draft_status(draft_id, DraftStatus.APPROVED.value, reviewed_at=datetime.utcnow().isoformat())
+        kwargs: dict = {"reviewed_at": datetime.utcnow().isoformat()}
+        if notes:
+            kwargs["reviewer_notes"] = notes
+        self.db.update_draft_status(draft_id, DraftStatus.APPROVED.value, **kwargs)
         logger.info("Approved draft %s", draft_id)
         return True
 

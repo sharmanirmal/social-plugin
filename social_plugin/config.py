@@ -53,6 +53,19 @@ _DEFAULT_CONFIG = {
         },
     },
     "safety": {"profanity_filter": True, "blocked_words": [], "compliance_note": ""},
+    "rules": {
+        "do": [
+            "Include specific data points or statistics when available",
+            "Reference the source or study when citing facts",
+            "Write with a clear, authentic voice — not generic marketing speak",
+        ],
+        "dont": [
+            "Never use clickbait or sensationalist language",
+            "Avoid generic hype phrases like 'revolutionize', 'game-changer', or 'disrupt'",
+            "Don't start posts with 'Exciting news!' or similar clichés",
+        ],
+    },
+    "style_examples": [],
     "notifications": {"slack": {"enabled": False, "webhook_url_env": "SLACK_WEBHOOK_URL", "channel": "#social-content"}, "cli": True},
     "trends": {
         "rss_feeds": ["https://news.google.com/rss/search?q=physical+AI+robotics"],
@@ -170,6 +183,14 @@ class Config:
     @property
     def notifications(self) -> dict:
         return self._data.get("notifications", {})
+
+    @property
+    def rules(self) -> dict:
+        return self._data.get("rules", {"do": [], "dont": []})
+
+    @property
+    def style_examples(self) -> list[str]:
+        return self._data.get("style_examples", [])
 
     @property
     def trends_config(self) -> dict:

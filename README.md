@@ -106,7 +106,8 @@ social-plugin run-all
 | `show <id>` | Full draft details |
 | `review <id>` | Interactive review (approve/edit/regen/reject) |
 | `approve <id>` | Approve for posting (also accepts failed drafts) |
-| `reject <id> -n "reason"` | Reject with notes |
+| `approve <id> -n "what you liked"` | Approve with positive feedback (improves future content) |
+| `reject <id> -n "reason"` | Reject with reason (required) |
 | `delete <id>` | Delete a draft permanently |
 | `edit <id>` | Open in $EDITOR |
 | `regen <id> -t "casual"` | Regenerate with new tone |
@@ -122,6 +123,10 @@ social-plugin run-all
 
 Generated content benefits from several quality features:
 
+- **Fully config-driven** — topic, hashtags, tone all from `config.yaml`; no hardcoded values in prompts
+- **User rules (DO's/DON'Ts)** — persistent content rules the AI follows during generation (e.g. "never use clickbait"); sensible defaults built-in
+- **Style examples (few-shot)** — paste 2-3 posts you like in config; the AI mimics your voice and structure
+- **Feedback loop** — rejection reasons and approval notes are fed back to the LLM to improve future content
 - **Long-form X/Twitter posts** — 280 chars by default; set `x_premium: true` in config for long-form posts up to 25,000 chars
 - **Reliable tweet posting** — auto-drops appended hashtags if over character limit; auto-regenerates via LLM if still over; falls back to manual `regen` suggestion if no LLM available (no truncation)
 - **Auto-retry on over-limit** — generator retries once with a stricter constraint if a tweet exceeds the character limit

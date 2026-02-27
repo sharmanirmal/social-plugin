@@ -44,6 +44,16 @@ class ContentGenerator:
             compliance_note=safety_cfg.get("compliance_note", ""),
         )
 
+    def _get_topic(self) -> str:
+        return self.config.topics.get("primary", "Physical AI and Robotics")
+
+    def _get_rules(self) -> dict:
+        return self.config.rules
+
+    def _get_style_examples(self) -> list[str] | None:
+        examples = self.config.style_examples
+        return examples if examples else None
+
     def _get_recent_trends(self) -> list[dict]:
         """Get today's trends from the database."""
         today = date.today().isoformat()
@@ -62,8 +72,12 @@ class ContentGenerator:
         tweet_cfg = gen_cfg.get("tweet", {})
         topics_cfg = self.config.topics
 
+        topic = self._get_topic()
+        rules = self._get_rules()
+        style_examples = self._get_style_examples()
+
         tone = tone or gen_cfg.get("default_tone", "informative, thought-provoking, professional")
-        hashtags = topics_cfg.get("hashtags", {}).get("twitter", ["#PhysicalAI", "#Robotics"])
+        hashtags = topics_cfg.get("hashtags", {}).get("twitter", [])
 
         x_premium = self.config.accounts.get("twitter", {}).get("x_premium", False)
         max_length = tweet_cfg.get("max_length", 25000 if x_premium else 280)
@@ -73,6 +87,8 @@ class ContentGenerator:
             tone=tone,
             hashtags=hashtags,
             compliance_note=self.config.safety.get("compliance_note", ""),
+            topic=topic,
+            rules=rules,
         )
 
         trends = self._get_recent_trends()
@@ -85,11 +101,19 @@ class ContentGenerator:
         recent_rows = self.db.get_recent_drafts(days=10, platform="twitter")[:15]
         previous_content = [dict(r)["content"] for r in recent_rows] if recent_rows else None
 
+        # Fetch feedback from rejections/approvals
+        rejection_notes = self.db.get_recent_rejection_notes(days=10, platform="twitter")
+        approval_notes = self.db.get_recent_approval_notes(days=10, platform="twitter")
+
         user_prompt = build_user_prompt(
             platform="Twitter",
             trends=trends,
             sources=sources,
             previous_drafts=previous_content,
+            topic=topic,
+            style_examples=style_examples,
+            rejection_feedback=rejection_notes or None,
+            approval_feedback=approval_notes or None,
         )
 
         result = self.llm.generate(system_prompt, user_prompt)
@@ -136,14 +160,20 @@ class ContentGenerator:
         li_cfg = gen_cfg.get("linkedin_post", {})
         topics_cfg = self.config.topics
 
+        topic = self._get_topic()
+        rules = self._get_rules()
+        style_examples = self._get_style_examples()
+
         tone = tone or gen_cfg.get("default_tone", "thought-leadership, conversational")
-        hashtags = topics_cfg.get("hashtags", {}).get("linkedin", ["#PhysicalAI", "#Robotics", "#AI"])
+        hashtags = topics_cfg.get("hashtags", {}).get("linkedin", [])
 
         system_prompt = build_linkedin_system_prompt(
             max_length=li_cfg.get("max_length", 3000),
             tone=tone,
             hashtags=hashtags,
             compliance_note=self.config.safety.get("compliance_note", ""),
+            topic=topic,
+            rules=rules,
         )
 
         trends = self._get_recent_trends()
@@ -156,11 +186,19 @@ class ContentGenerator:
         recent_rows = self.db.get_recent_drafts(days=10, platform="linkedin")[:15]
         previous_content = [dict(r)["content"] for r in recent_rows] if recent_rows else None
 
+        # Fetch feedback from rejections/approvals
+        rejection_notes = self.db.get_recent_rejection_notes(days=10, platform="linkedin")
+        approval_notes = self.db.get_recent_approval_notes(days=10, platform="linkedin")
+
         user_prompt = build_user_prompt(
             platform="LinkedIn",
             trends=trends,
             sources=sources,
             previous_drafts=previous_content,
+            topic=topic,
+            style_examples=style_examples,
+            rejection_feedback=rejection_notes or None,
+            approval_feedback=approval_notes or None,
         )
 
         result = self.llm.generate(system_prompt, user_prompt)
@@ -222,12 +260,14 @@ class ContentGenerator:
             logger.error("Draft %s not found", draft_id)
             return None
 
+        topic = self._get_topic()
+        rules = self._get_rules()
         platform_name = "tweet" if draft.platform == Platform.TWITTER else "LinkedIn post"
 
         if draft.platform == Platform.TWITTER:
-            system_prompt = build_tweet_system_prompt(tone=new_tone, is_rewrite=True)
+            system_prompt = build_tweet_system_prompt(tone=new_tone, is_rewrite=True, topic=topic, rules=rules)
         else:
-            system_prompt = build_linkedin_system_prompt(tone=new_tone)
+            system_prompt = build_linkedin_system_prompt(tone=new_tone, topic=topic, rules=rules)
 
         user_prompt = build_regen_prompt(draft.content, new_tone, platform_name)
         result = self.llm.generate(system_prompt, user_prompt)

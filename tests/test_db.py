@@ -98,3 +98,77 @@ def test_draft_counts_by_status(db):
     counts = db.get_draft_counts_by_status()
     assert counts["pending"] == 2
     assert counts["approved"] == 1
+
+
+# =============================================================================
+# Rejection / Approval feedback notes
+# =============================================================================
+
+
+def test_get_recent_rejection_notes(db):
+    """Get rejection notes from recently rejected drafts."""
+    db.insert_draft({"id": "rej1", "platform": "twitter", "content": "T1", "status": "pending"})
+    db.update_draft_status(
+        "rej1", "rejected",
+        reviewed_at="2025-12-01T00:00:00",
+        reviewer_notes="too generic",
+    )
+    notes = db.get_recent_rejection_notes(days=3650)
+    assert "too generic" in notes
+
+
+def test_get_recent_rejection_notes_excludes_null(db):
+    """Rejection notes excludes drafts with null/empty notes."""
+    db.insert_draft({"id": "rej2", "platform": "twitter", "content": "T2", "status": "pending"})
+    db.update_draft_status("rej2", "rejected", reviewed_at="2025-12-01T00:00:00")
+    db.insert_draft({"id": "rej3", "platform": "twitter", "content": "T3", "status": "pending"})
+    db.update_draft_status(
+        "rej3", "rejected",
+        reviewed_at="2025-12-01T00:00:00",
+        reviewer_notes="",
+    )
+    notes = db.get_recent_rejection_notes(days=3650)
+    assert len(notes) == 0
+
+
+def test_get_recent_rejection_notes_platform_filter(db):
+    """Rejection notes can be filtered by platform."""
+    db.insert_draft({"id": "rejT", "platform": "twitter", "content": "T", "status": "pending"})
+    db.update_draft_status(
+        "rejT", "rejected",
+        reviewed_at="2025-12-01T00:00:00",
+        reviewer_notes="twitter issue",
+    )
+    db.insert_draft({"id": "rejL", "platform": "linkedin", "content": "L", "status": "pending"})
+    db.update_draft_status(
+        "rejL", "rejected",
+        reviewed_at="2025-12-01T00:00:00",
+        reviewer_notes="linkedin issue",
+    )
+    twitter_notes = db.get_recent_rejection_notes(days=3650, platform="twitter")
+    assert "twitter issue" in twitter_notes
+    assert "linkedin issue" not in twitter_notes
+
+
+def test_get_recent_approval_notes(db):
+    """Get approval notes from recently approved drafts."""
+    db.insert_draft({"id": "app1", "platform": "twitter", "content": "T1", "status": "pending"})
+    db.update_draft_status(
+        "app1", "approved",
+        reviewed_at="2025-12-01T00:00:00",
+        reviewer_notes="loved the data points",
+    )
+    notes = db.get_recent_approval_notes(days=3650)
+    assert "loved the data points" in notes
+
+
+def test_get_recent_approval_notes_excludes_non_approved(db):
+    """Approval notes only includes approved/posted drafts."""
+    db.insert_draft({"id": "pend1", "platform": "twitter", "content": "T1", "status": "pending"})
+    db.update_draft_status(
+        "pend1", "pending",
+        reviewed_at="2025-12-01T00:00:00",
+        reviewer_notes="some note",
+    )
+    notes = db.get_recent_approval_notes(days=3650)
+    assert len(notes) == 0

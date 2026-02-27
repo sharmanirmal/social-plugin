@@ -309,6 +309,38 @@ class Database:
         sql += " ORDER BY created_at DESC"
         return self.execute(sql, tuple(params))
 
+    def get_recent_rejection_notes(self, days: int = 10, platform: str | None = None) -> list[str]:
+        """Get recent rejection notes for feedback to LLM."""
+        sql = (
+            "SELECT reviewer_notes FROM drafts "
+            "WHERE status = 'rejected' "
+            "AND reviewer_notes IS NOT NULL AND reviewer_notes != '' "
+            "AND reviewed_at > datetime('now', ?)"
+        )
+        params: list = [f"-{days} days"]
+        if platform:
+            sql += " AND platform = ?"
+            params.append(platform)
+        sql += " ORDER BY reviewed_at DESC LIMIT 10"
+        rows = self.execute(sql, tuple(params))
+        return [row["reviewer_notes"] for row in rows]
+
+    def get_recent_approval_notes(self, days: int = 10, platform: str | None = None) -> list[str]:
+        """Get recent approval notes (positive signals) for feedback to LLM."""
+        sql = (
+            "SELECT reviewer_notes FROM drafts "
+            "WHERE status IN ('approved', 'posted') "
+            "AND reviewer_notes IS NOT NULL AND reviewer_notes != '' "
+            "AND reviewed_at > datetime('now', ?)"
+        )
+        params: list = [f"-{days} days"]
+        if platform:
+            sql += " AND platform = ?"
+            params.append(platform)
+        sql += " ORDER BY reviewed_at DESC LIMIT 10"
+        rows = self.execute(sql, tuple(params))
+        return [row["reviewer_notes"] for row in rows]
+
     def get_posts_count_today(self, platform: str) -> int:
         row = self.execute_one(
             "SELECT COUNT(*) as cnt FROM drafts WHERE platform = ? AND status = 'posted' AND date(posted_at) = date('now')",

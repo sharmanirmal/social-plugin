@@ -76,11 +76,16 @@ class TwitterPublisher:
         """Use LLM to regenerate tweet content to fit within char_limit."""
         from social_plugin.generator.prompts import build_tweet_system_prompt, build_regen_prompt
 
+        topic = self.config.topics.get("primary", "Physical AI and Robotics")
+        rules = self.config.rules
+
         system_prompt = build_tweet_system_prompt(
             max_length=char_limit,
             tone=draft.tone or "concise",
             hashtags=draft.hashtags,
             compliance_note=self.config.safety.get("compliance_note", ""),
+            topic=topic,
+            rules=rules,
         )
         system_prompt += f"\n\nCRITICAL: Your response MUST be under {char_limit} characters including hashtags."
         user_prompt = build_regen_prompt(draft.content, "concise", "tweet")

@@ -51,6 +51,23 @@ safety:
   blocked_words: []
   compliance_note: "No financial advice, no medical claims"
 
+# --- Content Rules ---
+# Persistent DO's and DON'Ts the AI follows during generation.
+# To use built-in defaults, omit this section entirely.
+rules:
+  do:
+    - "Include specific data points or statistics when available"
+    - "Reference the source or study when citing facts"
+    - "Write with a clear, authentic voice — not generic marketing speak"
+  dont:
+    - "Never use clickbait or sensationalist language"
+    - "Avoid generic hype phrases like 'revolutionize', 'game-changer', or 'disrupt'"
+    - "Don't start posts with 'Exciting news!' or similar clichés"
+
+# --- Style Examples ---
+# Paste 2-3 posts you like. The AI uses these as reference for your voice and style.
+style_examples: []
+
 notifications:
   slack:
     enabled: false

@@ -4,6 +4,7 @@ from social_plugin.generator.prompts import (
     build_add_context_prompt,
     build_linkedin_system_prompt,
     build_regen_prompt,
+    build_rules_section,
     build_tweet_system_prompt,
     build_user_prompt,
 )
@@ -149,3 +150,193 @@ def test_add_context_prompt_output_format():
     """Add context prompt asks for only the rewritten text."""
     prompt = build_add_context_prompt("Original", "New info", "linkedin")
     assert "Output ONLY the rewritten text" in prompt
+
+
+# =============================================================================
+# Feature A: Config-driven topic tests
+# =============================================================================
+
+
+def test_tweet_system_prompt_custom_topic():
+    """Tweet system prompt uses custom topic."""
+    prompt = build_tweet_system_prompt(topic="Quantum Computing")
+    assert "Quantum Computing" in prompt
+
+
+def test_linkedin_system_prompt_custom_topic():
+    """LinkedIn system prompt uses custom topic."""
+    prompt = build_linkedin_system_prompt(topic="Quantum Computing")
+    assert "Quantum Computing" in prompt
+
+
+def test_user_prompt_custom_topic():
+    """User prompt uses custom topic."""
+    prompt = build_user_prompt("Twitter", topic="Quantum Computing")
+    assert "Quantum Computing" in prompt
+
+
+def test_user_prompt_no_trends_custom_topic():
+    """No-trends fallback uses custom topic."""
+    prompt = build_user_prompt("Twitter", topic="Quantum Computing")
+    assert "Quantum Computing" in prompt
+    assert "No specific trends" in prompt
+
+
+def test_no_hardcoded_physical_ai_when_custom_topic():
+    """When custom topic is set, 'Physical AI' should not appear."""
+    prompt = build_tweet_system_prompt(topic="Quantum Computing")
+    assert "Physical AI" not in prompt
+    prompt2 = build_linkedin_system_prompt(topic="Quantum Computing")
+    assert "Physical AI" not in prompt2
+    prompt3 = build_user_prompt("Twitter", topic="Quantum Computing")
+    assert "Physical AI" not in prompt3
+
+
+# =============================================================================
+# Feature A: Hashtag tests
+# =============================================================================
+
+
+def test_tweet_prompt_custom_hashtags():
+    """Tweet prompt uses custom hashtags."""
+    prompt = build_tweet_system_prompt(hashtags=["#Quantum", "#Physics"])
+    assert "#Quantum" in prompt
+    assert "#Physics" in prompt
+
+
+def test_linkedin_prompt_custom_hashtags():
+    """LinkedIn prompt uses custom hashtags."""
+    prompt = build_linkedin_system_prompt(hashtags=["#Quantum", "#Physics"])
+    assert "#Quantum" in prompt
+    assert "#Physics" in prompt
+
+
+def test_tweet_prompt_empty_hashtags():
+    """Tweet prompt handles empty hashtags list gracefully."""
+    prompt = build_tweet_system_prompt(hashtags=[])
+    # Should not crash; uses fallback text
+    assert "relevant hashtags" in prompt
+
+
+# =============================================================================
+# Feature B: Rules tests
+# =============================================================================
+
+
+def test_build_rules_section_do_and_dont():
+    """Rules section includes both DO and DON'T."""
+    rules = {
+        "do": ["Use data points", "Be specific"],
+        "dont": ["No clickbait", "No hype"],
+    }
+    section = build_rules_section(rules)
+    assert "Content rules:" in section
+    assert "DO:" in section
+    assert "DON'T:" in section
+    assert "Use data points" in section
+    assert "No clickbait" in section
+
+
+def test_build_rules_section_do_only():
+    """Rules section works with only DO rules."""
+    rules = {"do": ["Use data points"], "dont": []}
+    section = build_rules_section(rules)
+    assert "DO:" in section
+    assert "DON'T:" not in section
+
+
+def test_build_rules_section_empty():
+    """Rules section returns empty string for empty rules."""
+    section = build_rules_section({"do": [], "dont": []})
+    assert section == ""
+
+
+def test_build_rules_section_none():
+    """Rules section returns empty string for None."""
+    section = build_rules_section(None)
+    assert section == ""
+
+
+def test_tweet_prompt_with_rules():
+    """Tweet system prompt includes rules section."""
+    rules = {"do": ["Be specific"], "dont": ["No hype"]}
+    prompt = build_tweet_system_prompt(rules=rules)
+    assert "Content rules:" in prompt
+    assert "Be specific" in prompt
+    assert "No hype" in prompt
+
+
+def test_linkedin_prompt_with_rules():
+    """LinkedIn system prompt includes rules section."""
+    rules = {"do": ["Be specific"], "dont": ["No hype"]}
+    prompt = build_linkedin_system_prompt(rules=rules)
+    assert "Content rules:" in prompt
+    assert "Be specific" in prompt
+
+
+# =============================================================================
+# Feature C: Style examples tests
+# =============================================================================
+
+
+def test_user_prompt_with_style_examples():
+    """User prompt includes style examples."""
+    examples = [
+        "Boston Dynamics' Atlas does backflips. #Robotics",
+        "Toyota Research achieves 94% success rate.",
+    ]
+    prompt = build_user_prompt("Twitter", style_examples=examples)
+    assert "Boston Dynamics" in prompt
+    assert "Toyota Research" in prompt
+    assert "Match this voice" in prompt
+    assert 'Example 1:' in prompt
+    assert 'Example 2:' in prompt
+
+
+def test_user_prompt_no_style_examples():
+    """User prompt omits style section when no examples."""
+    prompt = build_user_prompt("Twitter", style_examples=None)
+    assert "Match this voice" not in prompt
+
+
+# =============================================================================
+# Feature D: Rejection/approval feedback tests
+# =============================================================================
+
+
+def test_user_prompt_with_rejection_feedback():
+    """User prompt includes rejection feedback."""
+    feedback = ["too generic", "needs more data"]
+    prompt = build_user_prompt("Twitter", rejection_feedback=feedback)
+    assert "things to AVOID" in prompt
+    assert "too generic" in prompt
+    assert "needs more data" in prompt
+
+
+def test_user_prompt_with_approval_feedback():
+    """User prompt includes approval feedback."""
+    feedback = ["loved the data points", "great hook"]
+    prompt = build_user_prompt("Twitter", approval_feedback=feedback)
+    assert "things that worked WELL" in prompt
+    assert "loved the data points" in prompt
+    assert "great hook" in prompt
+
+
+def test_user_prompt_with_both_feedback_types():
+    """User prompt includes both rejection and approval feedback."""
+    prompt = build_user_prompt(
+        "Twitter",
+        rejection_feedback=["too long"],
+        approval_feedback=["good structure"],
+    )
+    assert "things to AVOID" in prompt
+    assert "too long" in prompt
+    assert "things that worked WELL" in prompt
+    assert "good structure" in prompt
+
+
+def test_user_prompt_without_feedback():
+    """User prompt omits feedback sections when none provided."""
+    prompt = build_user_prompt("Twitter")
+    assert "things to AVOID" not in prompt
+    assert "things that worked WELL" not in prompt

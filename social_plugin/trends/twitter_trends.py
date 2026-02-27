@@ -36,7 +36,7 @@ class TwitterTrendFetcher:
         ]
         if not twitter_feeds:
             # Build default Google News RSS for keywords
-            primary = self.config.topics.get("primary", "Physical AI")
+            primary = self.config.topics.get("primary", "Physical AI and Robotics")
             twitter_feeds = [
                 f"https://news.google.com/rss/search?q={primary.replace(' ', '+')}+site:x.com"
             ]

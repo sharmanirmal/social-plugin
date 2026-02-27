@@ -77,7 +77,8 @@ social-plugin drafts                 # List pending drafts (rich table)
 social-plugin drafts --status all    # List all drafts
 social-plugin show <id>              # Full draft details
 social-plugin approve <id>           # Approve for posting (also accepts failed drafts)
-social-plugin reject <id> -n "why"   # Reject with notes
+social-plugin approve <id> -n "why"  # Approve with positive feedback (optional)
+social-plugin reject <id> -n "why"   # Reject with reason (required)
 social-plugin delete <id>            # Delete a draft permanently
 social-plugin edit <id>              # Open in $EDITOR
 social-plugin regen <id> -t "casual" # Regenerate with new tone via LLM
@@ -223,6 +224,10 @@ git push --tags
 - **Rewrite quality** — `build_add_context_prompt()` and updated `build_regen_prompt()` produce genuinely different rewrites, not minor rewordings
 - **Source availability warnings** — CLI and prompts warn when no reference documents are available
 - **X.com feed support** — trend fetcher matches both x.com and twitter.com feeds (Twitter → X rename)
+- **Config-driven prompts** — topic, hashtags, and all prompt content come from config; no hardcoded values in prompt templates
+- **User rules (DO/DON'T)** — persistent content rules in config with sensible defaults; injected into system prompts via `build_rules_section()`
+- **Style examples (few-shot)** — user pastes 2-3 example posts in config; injected into user prompts for voice/style matching
+- **Feedback loop** — mandatory rejection reasons + optional approval notes stored in DB; recent feedback fed to LLM via `get_recent_rejection_notes()` / `get_recent_approval_notes()`
 
 ## Usage Model
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 TWEET_SYSTEM_PROMPT = """\
-You are an expert social media strategist specializing in Physical AI and Robotics content.
+You are an expert social media strategist specializing in {topic} content.
 You create concise, engaging tweets that drive engagement in the tech community.
 
 Guidelines:
@@ -17,11 +17,12 @@ Guidelines:
 - No emojis unless they add genuine value
 - {compliance_note}
 
+{rules_section}\
 Output ONLY the tweet text, nothing else. No quotes, no labels, no explanations."""
 
 
 LINKEDIN_SYSTEM_PROMPT = """\
-You are an expert social media strategist specializing in Physical AI and Robotics content.
+You are an expert social media strategist specializing in {topic} content.
 You create engaging LinkedIn posts that establish thought leadership.
 
 Guidelines:
@@ -35,21 +36,62 @@ Guidelines:
 - Include 2-3 relevant hashtags from: {hashtags}
 - {compliance_note}
 
+{rules_section}\
 Output ONLY the post text, nothing else. No quotes, no labels, no explanations."""
 
 
 USER_PROMPT_TEMPLATE = """\
-Create a {platform} post about Physical AI and Robotics.
+Create a {platform} post about {topic}.
 
 {trends_section}
 
 {sources_section}
 
+{style_section}
+
 {previous_drafts_section}
+
+{rejection_section}
+
+{approval_section}
 
 {url_instruction}
 
 {additional_context}"""
+
+
+def build_rules_section(rules: dict | None = None) -> str:
+    """Build a formatted rules section from DO's and DON'Ts.
+
+    Returns a string like:
+        Content rules:
+        DO:
+        - Include specific data points...
+        DON'T:
+        - Never use clickbait...
+
+    Returns empty string if no rules provided.
+    """
+    if not rules:
+        return ""
+
+    do_rules = rules.get("do", [])
+    dont_rules = rules.get("dont", [])
+
+    if not do_rules and not dont_rules:
+        return ""
+
+    parts = ["Content rules:"]
+    if do_rules:
+        parts.append("DO:")
+        for rule in do_rules:
+            parts.append(f"- {rule}")
+    if dont_rules:
+        parts.append("DON'T:")
+        for rule in dont_rules:
+            parts.append(f"- {rule}")
+
+    return "\n".join(parts) + "\n\n"
 
 
 def build_tweet_system_prompt(
@@ -58,6 +100,8 @@ def build_tweet_system_prompt(
     hashtags: list[str] | None = None,
     compliance_note: str = "",
     is_rewrite: bool = False,
+    topic: str = "Physical AI and Robotics",
+    rules: dict | None = None,
 ) -> str:
     if is_rewrite:
         length_note = (
@@ -74,10 +118,12 @@ def build_tweet_system_prompt(
             f"Aim for 200-600 characters for maximum engagement, but go longer when the content warrants depth"
         )
     return TWEET_SYSTEM_PROMPT.format(
+        topic=topic,
         length_note=length_note,
         tone=tone,
-        hashtags=", ".join(hashtags or ["#PhysicalAI", "#Robotics"]),
+        hashtags=", ".join(hashtags) if hashtags else "relevant hashtags",
         compliance_note=compliance_note or "No disclaimers needed.",
+        rules_section=build_rules_section(rules),
     )
 
 
@@ -86,12 +132,16 @@ def build_linkedin_system_prompt(
     tone: str = "thought-leadership, conversational",
     hashtags: list[str] | None = None,
     compliance_note: str = "",
+    topic: str = "Physical AI and Robotics",
+    rules: dict | None = None,
 ) -> str:
     return LINKEDIN_SYSTEM_PROMPT.format(
+        topic=topic,
         max_length=max_length,
         tone=tone,
-        hashtags=", ".join(hashtags or ["#PhysicalAI", "#Robotics", "#AI"]),
+        hashtags=", ".join(hashtags) if hashtags else "relevant hashtags",
         compliance_note=compliance_note or "No disclaimers needed.",
+        rules_section=build_rules_section(rules),
     )
 
 
@@ -101,6 +151,10 @@ def build_user_prompt(
     sources: list[dict] | None = None,
     additional_context: str = "",
     previous_drafts: list[str] | None = None,
+    topic: str = "Physical AI and Robotics",
+    style_examples: list[str] | None = None,
+    rejection_feedback: list[str] | None = None,
+    approval_feedback: list[str] | None = None,
 ) -> str:
     # Trends section (with URLs)
     if trends:
@@ -114,7 +168,7 @@ def build_user_prompt(
             trend_lines.append(line)
         trends_section = "Recent trending topics:\n" + "\n".join(trend_lines)
     else:
-        trends_section = "No specific trends available — write about a general Physical AI topic."
+        trends_section = f"No specific trends available — write about a general {topic} topic."
 
     # Sources section (with source paths/URLs)
     if sources:
@@ -135,6 +189,16 @@ def build_user_prompt(
             "documents via 'social-plugin fetch-sources'."
         )
 
+    # Style examples section
+    if style_examples:
+        examples_text = "\n\n".join(f'Example {i+1}: "{ex}"' for i, ex in enumerate(style_examples[:3]))
+        style_section = (
+            "Here are examples of posts the user likes. "
+            "Match this voice, structure, and style:\n\n" + examples_text
+        )
+    else:
+        style_section = ""
+
     # Previous drafts section
     if previous_drafts:
         drafts_list = "\n".join(f"- {d[:150]}" for d in previous_drafts)
@@ -145,6 +209,20 @@ def build_user_prompt(
         )
     else:
         previous_drafts_section = ""
+
+    # Rejection feedback
+    if rejection_feedback:
+        feedback_lines = "\n".join(f'- "{note}"' for note in rejection_feedback)
+        rejection_section = "Previous feedback — things to AVOID:\n" + feedback_lines
+    else:
+        rejection_section = ""
+
+    # Approval feedback
+    if approval_feedback:
+        feedback_lines = "\n".join(f'- "{note}"' for note in approval_feedback)
+        approval_section = "Previous feedback — things that worked WELL:\n" + feedback_lines
+    else:
+        approval_section = ""
 
     # URL instruction
     if platform.lower() in ("twitter", "x"):
@@ -161,9 +239,13 @@ def build_user_prompt(
 
     return USER_PROMPT_TEMPLATE.format(
         platform=platform,
+        topic=topic,
         trends_section=trends_section,
         sources_section=sources_section,
+        style_section=style_section,
         previous_drafts_section=previous_drafts_section,
+        rejection_section=rejection_section,
+        approval_section=approval_section,
         url_instruction=url_instruction,
         additional_context=additional_context,
     ).strip()
