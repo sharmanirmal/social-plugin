@@ -170,7 +170,7 @@ GOOGLE_SERVICE_ACCOUNT_PATH # Google Docs access
 
 ## API Details
 
-- **Twitter/X**: Pay-per-use model (as of 2025). Credentials from developer.x.com. App type: "Automated App or Bot". Requires Read+Write permissions.
+- **Twitter/X**: Pay-per-use model (as of 2025). Credentials from developer.x.com. App type: "Automated App or Bot". Requires Read+Write permissions. Standard accounts limited to 280-char tweets; X Premium accounts support long-form up to 25,000 chars (set `x_premium: true` in config).
 - **LinkedIn**: Manual posting mode — drafts copied to clipboard (macOS/Linux/Windows). Auto-post deferred until LinkedIn Developer app is set up.
 - **Anthropic**: claude-sonnet-4-5-20250929, claude-sonnet-4-6, claude-opus-4-6, claude-haiku-4-5-20251001
 - **OpenAI**: gpt-4o, gpt-4o-mini, gpt-4-turbo, o1, o1-mini, o3-mini
@@ -217,7 +217,7 @@ git push --tags
 - **Profanity filter** — better-profanity scans before saving drafts
 - **Hashtag deduplication** — display_content skips hashtags already present in generated text
 - **Freshness-aware generation** — today's existing drafts passed to LLM to avoid repetition
-- **Flexible tweet length** — X/Twitter supports long-form (up to 4000 chars); soft guidance instead of hard 280-char truncation
+- **Flexible tweet length** — 280-char default for standard X accounts; `x_premium: true` config enables long-form up to 25,000 chars. Publisher enforces limit before posting with clear error messages
 - **URL references** — trend URLs and source paths included in prompts; LLM instructed to embed clickable links
 - **Rewrite quality** — `build_add_context_prompt()` and updated `build_regen_prompt()` produce genuinely different rewrites, not minor rewordings
 - **Source availability warnings** — CLI and prompts warn when no reference documents are available
