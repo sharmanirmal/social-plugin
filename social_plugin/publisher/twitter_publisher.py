@@ -105,7 +105,6 @@ class TwitterPublisher:
             return result
         except Exception as e:
             error_msg = str(e)
-            self.draft_manager.mark_failed(draft.id, error_msg)
             logger.error("Tweet posting failed for %s: %s", draft.id, error_msg)
             return None
 
