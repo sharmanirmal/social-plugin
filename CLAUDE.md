@@ -37,8 +37,8 @@ social-plugin/
 │   ├── generator/
 │   │   ├── llm_client.py        # Multi-provider LLM abstraction (Claude, GPT, Gemini)
 │   │   ├── claude_client.py     # Legacy Claude-only client (backward compat)
-│   │   ├── content_generator.py # Orchestrator: trends + docs → LLM → drafts
-│   │   ├── prompts.py           # System/user prompt builders
+│   │   ├── content_generator.py # Orchestrator: trends + docs → LLM → drafts (freshness-aware)
+│   │   ├── prompts.py           # System/user prompt builders (regen, add-context, URL refs)
 │   │   └── safety.py            # Profanity filter + blocked words
 │   ├── drafts/                  # Draft model, status lifecycle, CRUD manager
 │   ├── publisher/               # Twitter posting, LinkedIn clipboard, media upload
@@ -53,7 +53,7 @@ social-plugin/
 │   ├── social_plugin.db         # SQLite database (gitignored)
 │   ├── cache/                   # Downloaded docs/images
 │   └── logs/                    # Rotating log files
-├── tests/                       # 33 tests (config, db, drafts, safety, prompts)
+├── tests/                       # 45 tests (config, db, drafts, safety, prompts)
 ├── .github/workflows/           # CI: test.yml + publish.yml (TestPyPI → PyPI)
 ├── pyproject.toml               # PyPI metadata, deps, entry points
 ├── LICENSE                      # MIT
@@ -175,7 +175,7 @@ GOOGLE_SERVICE_ACCOUNT_PATH # Google Docs access
 - **Anthropic**: claude-sonnet-4-5-20250929, claude-sonnet-4-6, claude-opus-4-6, claude-haiku-4-5-20251001
 - **OpenAI**: gpt-4o, gpt-4o-mini, gpt-4-turbo, o1, o1-mini, o3-mini
 - **Google**: gemini-2.0-flash, gemini-2.5-pro, gemini-2.5-flash, gemini-1.5-pro
-- **Trends**: Google News RSS (free, no API key needed). No Twitter search API used.
+- **Trends**: Google News RSS (free, no API key needed). Feeds for both x.com and twitter.com. No Twitter search API used.
 
 ## Development
 
@@ -216,6 +216,12 @@ git push --tags
 - **Tone configurable per draft** — `regen` command re-generates with LLM using new tone
 - **Profanity filter** — better-profanity scans before saving drafts
 - **Hashtag deduplication** — display_content skips hashtags already present in generated text
+- **Freshness-aware generation** — today's existing drafts passed to LLM to avoid repetition
+- **Flexible tweet length** — X/Twitter supports long-form (up to 4000 chars); soft guidance instead of hard 280-char truncation
+- **URL references** — trend URLs and source paths included in prompts; LLM instructed to embed clickable links
+- **Rewrite quality** — `build_add_context_prompt()` and updated `build_regen_prompt()` produce genuinely different rewrites, not minor rewordings
+- **Source availability warnings** — CLI and prompts warn when no reference documents are available
+- **X.com feed support** — trend fetcher matches both x.com and twitter.com feeds (Twitter → X rename)
 
 ## Usage Model
 

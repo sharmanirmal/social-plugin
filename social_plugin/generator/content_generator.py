@@ -14,6 +14,7 @@ from social_plugin.generator.prompts import (
     build_regen_prompt,
     build_tweet_system_prompt,
     build_user_prompt,
+    build_add_context_prompt,
 )
 from social_plugin.generator.safety import ContentSafety
 from social_plugin.utils.logger import get_logger
@@ -65,7 +66,7 @@ class ContentGenerator:
         hashtags = topics_cfg.get("hashtags", {}).get("twitter", ["#PhysicalAI", "#Robotics"])
 
         system_prompt = build_tweet_system_prompt(
-            max_length=tweet_cfg.get("max_length", 280),
+            max_length=tweet_cfg.get("max_length", 4000),
             tone=tone,
             hashtags=hashtags,
             compliance_note=self.config.safety.get("compliance_note", ""),
@@ -74,10 +75,18 @@ class ContentGenerator:
         trends = self._get_recent_trends()
         sources = self._get_recent_sources()
 
+        if not sources:
+            logger.warning("No source documents available — generated content will be based on trends and general knowledge only")
+
+        # Fetch today's existing drafts for freshness context
+        todays_rows = self.db.get_todays_drafts("twitter")
+        previous_content = [dict(r)["content"] for r in todays_rows] if todays_rows else None
+
         user_prompt = build_user_prompt(
             platform="Twitter",
             trends=trends,
             sources=sources,
+            previous_drafts=previous_content,
         )
 
         result = self.llm.generate(system_prompt, user_prompt)
@@ -92,11 +101,10 @@ class ContentGenerator:
                     user_prompt,
                 )
 
-        # Trim if over limit
         content = result.text.strip()
-        max_len = tweet_cfg.get("max_length", 280)
+        max_len = tweet_cfg.get("max_length", 4000)
         if len(content) > max_len:
-            content = content[:max_len - 3] + "..."
+            logger.warning("Tweet draft (%d chars) exceeds max_length (%d) — consider reviewing", len(content), max_len)
 
         if dry_run:
             logger.info("[DRY RUN] Tweet: %s", content[:100])
@@ -134,10 +142,18 @@ class ContentGenerator:
         trends = self._get_recent_trends()
         sources = self._get_recent_sources()
 
+        if not sources:
+            logger.warning("No source documents available — generated content will be based on trends and general knowledge only")
+
+        # Fetch today's existing drafts for freshness context
+        todays_rows = self.db.get_todays_drafts("linkedin")
+        previous_content = [dict(r)["content"] for r in todays_rows] if todays_rows else None
+
         user_prompt = build_user_prompt(
             platform="LinkedIn",
             trends=trends,
             sources=sources,
+            previous_drafts=previous_content,
         )
 
         result = self.llm.generate(system_prompt, user_prompt)
@@ -202,7 +218,7 @@ class ContentGenerator:
         platform_name = "tweet" if draft.platform == Platform.TWITTER else "LinkedIn post"
 
         if draft.platform == Platform.TWITTER:
-            system_prompt = build_tweet_system_prompt(tone=new_tone)
+            system_prompt = build_tweet_system_prompt(tone=new_tone, is_rewrite=True)
         else:
             system_prompt = build_linkedin_system_prompt(tone=new_tone)
 

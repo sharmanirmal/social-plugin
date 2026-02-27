@@ -28,13 +28,17 @@ class TwitterTrendFetcher:
     def _get_twitter_feeds(self) -> list[str]:
         """Get RSS feeds configured for Twitter trends."""
         feeds = self.config.trends_config.get("rss_feeds", [])
-        # Filter for Twitter-specific feeds or use all
-        twitter_feeds = [f for f in feeds if "twitter" in f.lower() or "site:twitter.com" in f.lower()]
+        # Filter for Twitter/X-specific feeds or use all
+        twitter_feeds = [
+            f for f in feeds
+            if "twitter" in f.lower() or "site:twitter.com" in f.lower()
+            or "x.com" in f.lower() or "site:x.com" in f.lower()
+        ]
         if not twitter_feeds:
             # Build default Google News RSS for keywords
             primary = self.config.topics.get("primary", "Physical AI")
             twitter_feeds = [
-                f"https://news.google.com/rss/search?q={primary.replace(' ', '+')}+site:twitter.com"
+                f"https://news.google.com/rss/search?q={primary.replace(' ', '+')}+site:x.com"
             ]
         return twitter_feeds
 

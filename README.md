@@ -118,6 +118,17 @@ social-plugin run-all
 | `expire` | Expire old pending drafts |
 | `auth-check` | Verify API credentials |
 
+### Content Generation Quality
+
+Generated content benefits from several quality features:
+
+- **Long-form X/Twitter posts** — tweets can be up to 4000 characters when the content warrants depth (not limited to 280)
+- **Source URL references** — when referencing articles or research, generated posts include clickable source URLs
+- **Freshness-aware** — multiple `generate` runs in the same day produce different content (previous drafts passed as context)
+- **Meaningful rewrites** — `review` choice 3 (add context) and `regen` produce genuinely different posts, not minor rewordings
+- **Source warnings** — warns when no reference documents are available, suggests adding docs for richer content
+- **X.com + Twitter feed support** — trend discovery works with both x.com and twitter.com RSS feeds
+
 ### Draft Lifecycle
 
 ```

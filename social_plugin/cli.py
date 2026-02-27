@@ -232,6 +232,13 @@ def generate(ctx, tone: str | None, dry_run: bool):
         from social_plugin.generator.content_generator import ContentGenerator
         from social_plugin.notifications.slack_notifier import SlackNotifier
 
+        # Check for source documents
+        cache_ttl = config.sources.get("cache_ttl_hours", 24)
+        recent_sources = db.get_recent_source_documents(hours=cache_ttl)
+        if not recent_sources:
+            console.print("[yellow]Warning: No source documents available. Content will be based on trends and general knowledge only.[/yellow]")
+            console.print("[dim]Tip: Add reference docs with 'social-plugin fetch-sources' for richer content.[/dim]")
+
         generator = ContentGenerator(config, db, dm)
         drafts = generator.generate_all(tone=tone, dry_run=dry_run)
 
@@ -435,7 +442,11 @@ def review_draft(ctx, draft_id: str):
             extra_info = click.prompt("Additional info")
 
             from social_plugin.generator.llm_client import create_llm_client
-            from social_plugin.generator.prompts import build_tweet_system_prompt, build_linkedin_system_prompt
+            from social_plugin.generator.prompts import (
+                build_tweet_system_prompt,
+                build_linkedin_system_prompt,
+                build_add_context_prompt,
+            )
             from social_plugin.drafts.models import Platform
 
             gen_cfg = config.generation
@@ -448,15 +459,12 @@ def review_draft(ctx, draft_id: str):
 
             tone = draft.tone or gen_cfg.get("default_tone", "")
             if draft.platform == Platform.TWITTER:
-                system_prompt = build_tweet_system_prompt(tone=tone)
+                system_prompt = build_tweet_system_prompt(tone=tone, is_rewrite=True)
             else:
                 system_prompt = build_linkedin_system_prompt(tone=tone)
 
-            user_prompt = (
-                f"Here is an existing {draft.platform.value} post:\n\n"
-                f"{draft.content}\n\n"
-                f"Rewrite it incorporating this additional information: {extra_info}\n\n"
-                f"Keep the same general style and tone. Output ONLY the rewritten text."
+            user_prompt = build_add_context_prompt(
+                draft.content, extra_info, draft.platform.value
             )
 
             console.print("[dim]Regenerating with added context...[/dim]")
@@ -839,6 +847,10 @@ def run_all(ctx, dry_run: bool):
 
         summary["sources"] = source_count
         console.print(f"  [green]{source_count} sources read[/green]")
+
+        if source_count == 0:
+            console.print("[yellow]  Warning: No source documents available. Content will be based on trends and general knowledge only.[/yellow]")
+            console.print("[dim]  Tip: Add reference docs via config sources for richer content.[/dim]")
 
         # 3. Generate drafts
         console.print("[bold]Step 3/3: Generating drafts...[/bold]")

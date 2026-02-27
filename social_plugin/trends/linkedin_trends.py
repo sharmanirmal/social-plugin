@@ -28,8 +28,11 @@ class LinkedInTrendFetcher:
     def _get_feeds(self) -> list[str]:
         """Get RSS feeds for LinkedIn trends + industry feeds."""
         feeds = self.config.trends_config.get("rss_feeds", [])
-        # Include LinkedIn-specific and general industry feeds (exclude Twitter-specific)
-        result = [f for f in feeds if "site:twitter.com" not in f.lower()]
+        # Include LinkedIn-specific and general industry feeds (exclude Twitter/X-specific)
+        result = [
+            f for f in feeds
+            if "site:twitter.com" not in f.lower() and "site:x.com" not in f.lower()
+        ]
         if not result:
             primary = self.config.topics.get("primary", "Physical AI")
             result = [

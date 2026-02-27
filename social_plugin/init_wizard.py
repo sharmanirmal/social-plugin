@@ -215,7 +215,7 @@ def run_init_wizard() -> Path:
             "temperature": 0.7,
             "default_tone": "informative, thought-provoking, professional",
             "tweet": {
-                "max_length": 280,
+                "max_length": 4000,
                 "count_per_run": 1,
                 "style": "concise insight with relevant hashtag",
             },
@@ -241,6 +241,8 @@ def run_init_wizard() -> Path:
         "trends": {
             "rss_feeds": [
                 f"https://news.google.com/rss/search?q={rss_query}",
+                f"https://news.google.com/rss/search?q={rss_query}+site:x.com",
+                f"https://news.google.com/rss/search?q={rss_query}+site:linkedin.com",
             ],
             "max_results": 20,
         },

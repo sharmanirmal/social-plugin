@@ -299,6 +299,16 @@ class Database:
         rows = self.execute("SELECT status, COUNT(*) as cnt FROM drafts GROUP BY status")
         return {row["status"]: row["cnt"] for row in rows}
 
+    def get_todays_drafts(self, platform: str | None = None) -> list[sqlite3.Row]:
+        """Get drafts generated today for a specific platform."""
+        sql = "SELECT * FROM drafts WHERE date(created_at) = date('now')"
+        params: list = []
+        if platform:
+            sql += " AND platform = ?"
+            params.append(platform)
+        sql += " ORDER BY created_at DESC"
+        return self.execute(sql, tuple(params))
+
     def get_posts_count_today(self, platform: str) -> int:
         row = self.execute_one(
             "SELECT COUNT(*) as cnt FROM drafts WHERE platform = ? AND status = 'posted' AND date(posted_at) = date('now')",

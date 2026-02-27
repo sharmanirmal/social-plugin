@@ -75,7 +75,7 @@ generation:
   default_tone: "informative, thought-provoking, professional"
 
   tweet:
-    max_length: 280
+    max_length: 4000
     count_per_run: 1
     style: "concise insight with relevant hashtag"
 
@@ -104,6 +104,7 @@ notifications:
 trends:
   rss_feeds:
     - "https://news.google.com/rss/search?q=physical+AI+robotics"
+    - "https://news.google.com/rss/search?q=physical+AI+robotics+site:x.com"
     - "https://news.google.com/rss/search?q=physical+AI+robotics+site:twitter.com"
     - "https://news.google.com/rss/search?q=physical+AI+robotics+site:linkedin.com"
     - "https://feeds.feedburner.com/IeeeSpectrum"
