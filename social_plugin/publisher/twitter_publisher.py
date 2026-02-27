@@ -9,6 +9,7 @@ from social_plugin.config import Config
 from social_plugin.db import Database
 from social_plugin.drafts.draft_manager import DraftManager
 from social_plugin.drafts.models import Draft
+from social_plugin.generator.llm_client import LLMClient
 from social_plugin.publisher.media_uploader import validate_image
 from social_plugin.utils.logger import get_logger
 from social_plugin.utils.retry import with_retry
@@ -19,10 +20,11 @@ logger = get_logger()
 class TwitterPublisher:
     """Publish tweets using Twitter API v2 (free tier)."""
 
-    def __init__(self, config: Config, db: Database, draft_manager: DraftManager):
+    def __init__(self, config: Config, db: Database, draft_manager: DraftManager, llm: LLMClient | None = None):
         self.config = config
         self.db = db
         self.draft_manager = draft_manager
+        self.llm = llm
         self._client = None
         self._api_v1 = None
 
@@ -70,6 +72,24 @@ class TwitterPublisher:
         tweet_id = response.data["id"]
         return {"tweet_id": tweet_id, "url": f"https://x.com/i/status/{tweet_id}"}
 
+    def _regenerate_to_fit(self, draft: Draft, char_limit: int) -> str | None:
+        """Use LLM to regenerate tweet content to fit within char_limit."""
+        from social_plugin.generator.prompts import build_tweet_system_prompt, build_regen_prompt
+
+        system_prompt = build_tweet_system_prompt(
+            max_length=char_limit,
+            tone=draft.tone or "concise",
+            hashtags=draft.hashtags,
+            compliance_note=self.config.safety.get("compliance_note", ""),
+        )
+        system_prompt += f"\n\nCRITICAL: Your response MUST be under {char_limit} characters including hashtags."
+        user_prompt = build_regen_prompt(draft.content, "concise", "tweet")
+        result = self.llm.generate(system_prompt, user_prompt)
+        text = result.text.strip()
+        if len(text) <= char_limit:
+            return text
+        return None
+
     def post(self, draft: Draft, dry_run: bool = False) -> dict | None:
         """Post a tweet from an approved draft."""
         if not self._check_daily_limit():
@@ -79,15 +99,32 @@ class TwitterPublisher:
         x_premium = self.config.accounts.get("twitter", {}).get("x_premium", False)
         char_limit = 25000 if x_premium else 280
 
-        # Fallback chain: display_content → content only (drop hashtags) → truncate
+        # Fallback: drop appended hashtags if over limit
         if len(text) > char_limit and len(draft.content) <= char_limit:
             text = draft.content
             logger.info("Dropped appended hashtags to fit %d-char limit", char_limit)
 
         if len(text) > char_limit:
-            truncated = text[:char_limit - 3].rsplit(" ", 1)[0] + "..."
-            logger.warning("Truncated tweet from %d to %d chars", len(text), len(truncated))
-            text = truncated
+            if self.llm:
+                regenerated = self._regenerate_to_fit(draft, char_limit)
+                if regenerated:
+                    text = regenerated
+                    self.draft_manager.update_content(draft.id, text, draft.hashtags)
+                    logger.info("Auto-regenerated tweet to fit %d-char limit", char_limit)
+                else:
+                    logger.error(
+                        "Auto-regenerated tweet still exceeds %d-char limit. "
+                        "Use 'social-plugin regen %s -t concise'.",
+                        char_limit, draft.id,
+                    )
+                    return None
+            else:
+                logger.error(
+                    "Tweet (%d chars) exceeds %d-char limit. "
+                    "Use 'social-plugin regen %s -t concise' to regenerate within the limit.",
+                    len(text), char_limit, draft.id,
+                )
+                return None
 
         if dry_run:
             logger.info("[DRY RUN] Would post tweet: %s", text[:100])

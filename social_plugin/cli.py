@@ -721,9 +721,17 @@ def post_content(ctx, all_approved: bool, draft_id: str | None, dry_run: bool):
     from social_plugin.publisher.twitter_publisher import TwitterPublisher
     from social_plugin.publisher.linkedin_publisher import LinkedInPublisher
     from social_plugin.notifications.slack_notifier import SlackNotifier
+    from social_plugin.generator.llm_client import create_llm_client
 
     run_id = db.start_run("post")
-    twitter_pub = TwitterPublisher(config, db, dm)
+    gen_cfg = config.generation
+    llm = create_llm_client(
+        model=gen_cfg.get("model", "claude-sonnet-4-5-20250929"),
+        max_tokens=gen_cfg.get("max_tokens", 4096),
+        temperature=gen_cfg.get("temperature", 0.7),
+        provider=gen_cfg.get("provider"),
+    )
+    twitter_pub = TwitterPublisher(config, db, dm, llm=llm)
     linkedin_pub = LinkedInPublisher(config, db, dm)
     notifier = SlackNotifier(config)
     results: list[dict] = []

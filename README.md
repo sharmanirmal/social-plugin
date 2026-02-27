@@ -123,7 +123,7 @@ social-plugin run-all
 Generated content benefits from several quality features:
 
 - **Long-form X/Twitter posts** — 280 chars by default; set `x_premium: true` in config for long-form posts up to 25,000 chars
-- **Reliable tweet posting** — never fails on character limit; auto-drops appended hashtags or truncates at word boundary as fallback
+- **Reliable tweet posting** — auto-drops appended hashtags if over character limit; auto-regenerates via LLM if still over; falls back to manual `regen` suggestion if no LLM available (no truncation)
 - **Auto-retry on over-limit** — generator retries once with a stricter constraint if a tweet exceeds the character limit
 - **Source URL references** — when referencing articles or research, generated posts include clickable source URLs
 - **Freshness-aware** — avoids repeating content across runs by checking the last 15 drafts / 10 days of history (not just today)

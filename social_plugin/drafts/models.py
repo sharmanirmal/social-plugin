@@ -100,5 +100,5 @@ class Draft:
             missing_tags = [t for t in self.hashtags if t.lower() not in content_lower]
             if missing_tags:
                 tags = " ".join(missing_tags)
-                return f"{self.content}\n\n{tags}"
+                return f"{self.content} {tags}"
         return self.content
