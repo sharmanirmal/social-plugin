@@ -139,7 +139,7 @@ def build_user_prompt(
     if previous_drafts:
         drafts_list = "\n".join(f"- {d[:150]}" for d in previous_drafts)
         previous_drafts_section = (
-            "You have already generated the following posts today. "
+            "You have recently generated the following posts. "
             "Create something SUBSTANTIALLY different — different angle, different hook, "
             "different structure:\n" + drafts_list
         )

@@ -79,20 +79,15 @@ class TwitterPublisher:
         x_premium = self.config.accounts.get("twitter", {}).get("x_premium", False)
         char_limit = 25000 if x_premium else 280
 
+        # Fallback chain: display_content → content only (drop hashtags) → truncate
+        if len(text) > char_limit and len(draft.content) <= char_limit:
+            text = draft.content
+            logger.info("Dropped appended hashtags to fit %d-char limit", char_limit)
+
         if len(text) > char_limit:
-            if x_premium:
-                logger.error(
-                    "Tweet (%d chars) exceeds X Premium limit (%d). Edit the draft to shorten it.",
-                    len(text), char_limit,
-                )
-            else:
-                logger.error(
-                    "Tweet (%d chars) exceeds 280-char limit. "
-                    "Either edit the draft to ≤280 chars, or set 'x_premium: true' in config "
-                    "accounts.twitter if you have X Premium (supports up to 25,000 chars).",
-                    len(text),
-                )
-            return None
+            truncated = text[:char_limit - 3].rsplit(" ", 1)[0] + "..."
+            logger.warning("Truncated tweet from %d to %d chars", len(text), len(truncated))
+            text = truncated
 
         if dry_run:
             logger.info("[DRY RUN] Would post tweet: %s", text[:100])

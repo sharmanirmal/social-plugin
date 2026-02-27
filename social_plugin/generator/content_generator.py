@@ -81,9 +81,9 @@ class ContentGenerator:
         if not sources:
             logger.warning("No source documents available — generated content will be based on trends and general knowledge only")
 
-        # Fetch today's existing drafts for freshness context
-        todays_rows = self.db.get_todays_drafts("twitter")
-        previous_content = [dict(r)["content"] for r in todays_rows] if todays_rows else None
+        # Fetch recent drafts for freshness context (last 15 drafts / 10 days)
+        recent_rows = self.db.get_recent_drafts(days=10, platform="twitter")[:15]
+        previous_content = [dict(r)["content"] for r in recent_rows] if recent_rows else None
 
         user_prompt = build_user_prompt(
             platform="Twitter",
@@ -105,9 +105,13 @@ class ContentGenerator:
                 )
 
         content = result.text.strip()
-        max_len = tweet_cfg.get("max_length", 4000)
-        if len(content) > max_len:
-            logger.warning("Tweet draft (%d chars) exceeds max_length (%d) — consider reviewing", len(content), max_len)
+        if len(content) > max_length:
+            logger.warning("Tweet (%d chars) over %d-char limit — retrying with stricter constraint", len(content), max_length)
+            result = self.llm.generate(
+                system_prompt + f"\n\nCRITICAL: Your response MUST be under {max_length} characters including hashtags.",
+                user_prompt,
+            )
+            content = result.text.strip()
 
         if dry_run:
             logger.info("[DRY RUN] Tweet: %s", content[:100])
@@ -148,9 +152,9 @@ class ContentGenerator:
         if not sources:
             logger.warning("No source documents available — generated content will be based on trends and general knowledge only")
 
-        # Fetch today's existing drafts for freshness context
-        todays_rows = self.db.get_todays_drafts("linkedin")
-        previous_content = [dict(r)["content"] for r in todays_rows] if todays_rows else None
+        # Fetch recent drafts for freshness context (last 15 drafts / 10 days)
+        recent_rows = self.db.get_recent_drafts(days=10, platform="linkedin")[:15]
+        previous_content = [dict(r)["content"] for r in recent_rows] if recent_rows else None
 
         user_prompt = build_user_prompt(
             platform="LinkedIn",

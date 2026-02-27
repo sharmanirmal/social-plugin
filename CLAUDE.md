@@ -216,8 +216,9 @@ git push --tags
 - **Tone configurable per draft** — `regen` command re-generates with LLM using new tone
 - **Profanity filter** — better-profanity scans before saving drafts
 - **Hashtag deduplication** — display_content skips hashtags already present in generated text
-- **Freshness-aware generation** — today's existing drafts passed to LLM to avoid repetition
-- **Flexible tweet length** — 280-char default for standard X accounts; `x_premium: true` config enables long-form up to 25,000 chars. Publisher enforces limit before posting with clear error messages
+- **Freshness-aware generation** — last 15 drafts / 10 days of history passed to LLM to avoid repetition across runs
+- **Flexible tweet length** — 280-char default for standard X accounts; `x_premium: true` config enables long-form up to 25,000 chars. Publisher uses fallback chain (drop hashtags → truncate) to never fail on char limit
+- **Auto-retry on over-limit** — generator retries once with stricter constraint if tweet exceeds max_length
 - **URL references** — trend URLs and source paths included in prompts; LLM instructed to embed clickable links
 - **Rewrite quality** — `build_add_context_prompt()` and updated `build_regen_prompt()` produce genuinely different rewrites, not minor rewordings
 - **Source availability warnings** — CLI and prompts warn when no reference documents are available
