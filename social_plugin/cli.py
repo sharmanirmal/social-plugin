@@ -562,6 +562,78 @@ def reject_draft(ctx, draft_id: str, notes: str):
 
 
 # =============================================================================
+# delete
+# =============================================================================
+
+@cli.command("delete")
+@click.argument("draft_id")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation")
+@click.pass_context
+def delete_draft(ctx, draft_id: str, yes: bool):
+    """Delete a draft permanently."""
+    _, _, dm = _init(ctx.obj.get("config_path"))
+
+    draft = dm.get(draft_id)
+    if draft is None:
+        console.print(f"[red]Draft {draft_id} not found[/red]")
+        raise click.Abort()
+
+    if not yes:
+        console.print(f"  [bold]ID:[/bold] {draft.id}")
+        console.print(f"  [bold]Platform:[/bold] {draft.platform.value}")
+        console.print(f"  [bold]Status:[/bold] {draft.status.value}")
+        console.print(f"  [bold]Content:[/bold] {draft.content[:80]}...")
+        if not click.confirm(f"\nDelete this draft?", default=False):
+            console.print("[dim]Cancelled[/dim]")
+            return
+
+    if dm.delete(draft_id):
+        console.print(f"[green]Draft {draft_id} deleted[/green]")
+    else:
+        console.print(f"[red]Could not delete draft {draft_id}[/red]")
+
+
+# =============================================================================
+# list
+# =============================================================================
+
+@cli.command("list")
+@click.option("--last", "limit", default=10, help="Number of recent drafts to show")
+@click.pass_context
+def list_recent(ctx, limit: int):
+    """List recent drafts ordered by date."""
+    _, db, _ = _init(ctx.obj.get("config_path"))
+
+    from social_plugin.drafts.models import Draft
+
+    rows = db.get_latest_drafts(limit)
+    if not rows:
+        console.print("[dim]No drafts found[/dim]")
+        return
+
+    drafts = [Draft.from_db_row(r) for r in rows]
+
+    table = Table(title=f"Recent Drafts (last {limit})")
+    table.add_column("ID", style="cyan", width=10)
+    table.add_column("Platform", style="magenta")
+    table.add_column("Content", style="white", max_width=55)
+    table.add_column("Status", style="green")
+    table.add_column("Created", style="dim")
+
+    for draft in drafts:
+        preview = draft.content[:50].replace("\n", " ")
+        table.add_row(
+            draft.id,
+            draft.platform.value,
+            preview + "..." if len(draft.content) > 50 else preview,
+            draft.status.value,
+            str(draft.created_at)[:16] if draft.created_at else "",
+        )
+
+    console.print(table)
+
+
+# =============================================================================
 # edit
 # =============================================================================
 

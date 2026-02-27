@@ -95,6 +95,17 @@ class DraftManager:
         logger.error("Draft %s failed: %s", draft_id, error)
         return True
 
+    def delete(self, draft_id: str) -> bool:
+        """Delete a draft permanently."""
+        draft = self.get(draft_id)
+        if draft is None:
+            logger.error("Draft %s not found", draft_id)
+            return False
+        deleted = self.db.delete_draft(draft_id)
+        if deleted:
+            logger.info("Deleted draft %s", draft_id)
+        return deleted
+
     def update_content(self, draft_id: str, content: str, hashtags: list[str] | None = None) -> bool:
         """Update draft content (e.g., after manual edit or regeneration)."""
         import json

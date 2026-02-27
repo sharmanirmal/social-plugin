@@ -233,6 +233,16 @@ class Database:
         sql += " ORDER BY created_at DESC"
         return self.execute(sql, tuple(params))
 
+    def get_latest_drafts(self, limit: int = 10) -> list[sqlite3.Row]:
+        return self.execute("SELECT * FROM drafts ORDER BY created_at DESC LIMIT ?", (limit,))
+
+    def delete_draft(self, draft_id: str) -> bool:
+        with self.connection() as conn:
+            # Delete related analytics first
+            conn.execute("DELETE FROM post_analytics WHERE draft_id = ?", (draft_id,))
+            cur = conn.execute("DELETE FROM drafts WHERE id = ?", (draft_id,))
+            return cur.rowcount > 0
+
     # --- Analytics ---
 
     def insert_analytics(self, data: dict) -> int:
