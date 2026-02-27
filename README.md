@@ -100,12 +100,14 @@ social-plugin run-all
 | `fetch-sources` | Read configured Google Docs, PDFs, local files |
 | `generate` | Generate 1 tweet + 1 LinkedIn draft |
 | `generate --dry-run` | Preview without saving |
+| `list --last 10` | List last N drafts ordered by date |
 | `drafts` | List pending drafts |
 | `drafts --status all` | List all drafts |
 | `show <id>` | Full draft details |
 | `review <id>` | Interactive review (approve/edit/regen/reject) |
-| `approve <id>` | Approve for posting |
+| `approve <id>` | Approve for posting (also accepts failed drafts) |
 | `reject <id> -n "reason"` | Reject with notes |
+| `delete <id>` | Delete a draft permanently |
 | `edit <id>` | Open in $EDITOR |
 | `regen <id> -t "casual"` | Regenerate with new tone |
 | `post --id <id>` | Post specific draft |

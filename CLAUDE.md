@@ -27,7 +27,7 @@ social-plugin/
 │   └── config.example.yaml      # Documented example
 ├── credentials/                 # Gitignored — Google service account JSON
 ├── social_plugin/
-│   ├── cli.py                   # Click CLI — 17 commands (incl init, config)
+│   ├── cli.py                   # Click CLI — 19 commands (incl init, config, list, delete)
 │   ├── config.py                # YAML loader with app-dir resolution + validation
 │   ├── init_wizard.py           # Interactive 6-step setup wizard
 │   ├── db.py                    # SQLite schema (6 tables), CRUD helpers
@@ -72,11 +72,13 @@ social-plugin fetch-trends           # Fetch trending topics from RSS feeds
 social-plugin fetch-sources          # Read configured Google Docs, PDFs, local files
 social-plugin generate               # Generate 1 tweet + 1 LinkedIn draft via LLM
 social-plugin generate --dry-run     # Preview without saving
+social-plugin list --last 10         # List last N drafts by date
 social-plugin drafts                 # List pending drafts (rich table)
 social-plugin drafts --status all    # List all drafts
 social-plugin show <id>              # Full draft details
-social-plugin approve <id>           # Approve for posting
+social-plugin approve <id>           # Approve for posting (also accepts failed drafts)
 social-plugin reject <id> -n "why"   # Reject with notes
+social-plugin delete <id>            # Delete a draft permanently
 social-plugin edit <id>              # Open in $EDITOR
 social-plugin regen <id> -t "casual" # Regenerate with new tone via LLM
 social-plugin post --id <id>         # Post specific draft
