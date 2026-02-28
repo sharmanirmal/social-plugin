@@ -68,10 +68,17 @@ def cli(ctx, config_path: str | None):
 # =============================================================================
 
 @cli.command("init")
-def init_cmd():
+@click.option("--upgrade", is_flag=True, help="Upgrade existing config with new defaults (preserves your settings)")
+@click.pass_context
+def init_cmd(ctx, upgrade: bool):
     """Interactive setup wizard — creates config, .env, and database."""
-    from social_plugin.init_wizard import run_init_wizard
-    run_init_wizard()
+    if upgrade:
+        from social_plugin.init_wizard import run_upgrade
+        config_path = ctx.obj.get("config_path") if ctx.obj else None
+        run_upgrade(config_path)
+    else:
+        from social_plugin.init_wizard import run_init_wizard
+        run_init_wizard()
 
 
 # =============================================================================

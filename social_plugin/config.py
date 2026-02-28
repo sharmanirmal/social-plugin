@@ -21,7 +21,10 @@ def get_app_dir() -> Path:
     return Path(click.get_app_dir("social-plugin"))
 
 
+CONFIG_VERSION = 2  # Bump when new config sections are added
+
 _DEFAULT_CONFIG = {
+    "config_version": CONFIG_VERSION,
     "topics": {
         "primary": "Physical AI and Robotics",
         "keywords": ["physical AI", "robotics", "embodied AI"],

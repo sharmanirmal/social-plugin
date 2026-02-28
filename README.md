@@ -55,6 +55,17 @@ After running `social-plugin init`, config is stored in:
 
 If running from the repo directory, `./config/config.yaml` takes priority (development mode).
 
+### Upgrading
+
+When upgrading to a new version, run `init --upgrade` to add any new config sections while keeping all your existing settings:
+
+```bash
+pipx upgrade social-plugin
+social-plugin init --upgrade
+```
+
+This creates a backup (`config.yaml.bak`), then merges new defaults into your config. Your provider, model, topics, hashtags, and all other customizations are preserved.
+
 ### Multi-Provider Config
 
 ```yaml
@@ -95,6 +106,7 @@ social-plugin run-all
 | Command | Description |
 |---------|-------------|
 | `init` | Interactive setup wizard |
+| `init --upgrade` | Upgrade existing config with new defaults (preserves your settings) |
 | `config --show` | Show config paths and active provider |
 | `fetch-trends` | Fetch trending topics from RSS feeds |
 | `fetch-sources` | Read configured Google Docs, PDFs, local files |

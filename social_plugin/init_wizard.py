@@ -11,7 +11,7 @@ import yaml
 from rich.console import Console
 from rich.panel import Panel
 
-from social_plugin.config import get_app_dir
+from social_plugin.config import CONFIG_VERSION, get_app_dir
 
 console = Console()
 
@@ -181,6 +181,7 @@ def run_init_wizard() -> Path:
     rss_query = quote_plus(primary_topic.lower())
 
     config_dict = {
+        "config_version": CONFIG_VERSION,
         "topics": {
             "primary": primary_topic,
             "keywords": keywords,
@@ -286,6 +287,62 @@ def run_init_wizard() -> Path:
         border_style="green",
     ))
 
+    return config_path
+
+
+def run_upgrade(config_path: Path | None = None) -> Path | None:
+    """Upgrade an existing config with new defaults (preserves user settings).
+
+    Returns the path to the upgraded config, or None if no config was found.
+    """
+    import shutil
+
+    from social_plugin.config import CONFIG_VERSION, _DEFAULT_CONFIG, _deep_merge
+
+    # Locate config file: explicit path → CWD → app dir
+    if config_path is not None:
+        config_path = Path(config_path)
+    else:
+        cwd_config = Path.cwd() / "config" / "config.yaml"
+        app_dir_config = get_app_dir() / "config.yaml"
+        if cwd_config.exists():
+            config_path = cwd_config
+        elif app_dir_config.exists():
+            config_path = app_dir_config
+
+    if config_path is None or not config_path.exists():
+        console.print("[red]No existing config found.[/red]")
+        console.print("Run [cyan]social-plugin init[/cyan] to create one first.")
+        return None
+
+    # Read existing config
+    with open(config_path) as f:
+        user_config = yaml.safe_load(f) or {}
+
+    old_keys = set(user_config.keys())
+
+    # Backup
+    backup_path = config_path.with_suffix(".yaml.bak")
+    shutil.copy2(config_path, backup_path)
+    console.print(f"  Backup saved to [green]{backup_path}[/green]")
+
+    # Merge: defaults + user overrides (user wins)
+    upgraded = _deep_merge(_DEFAULT_CONFIG, user_config)
+    upgraded["config_version"] = CONFIG_VERSION
+
+    # Write back
+    config_text = "# Social Plugin Configuration\n# Upgraded by: social-plugin init --upgrade\n\n"
+    config_text += yaml.safe_dump(upgraded, default_flow_style=False, sort_keys=False)
+    config_path.write_text(config_text)
+
+    # Summary
+    new_keys = set(upgraded.keys()) - old_keys
+    if new_keys:
+        console.print(f"  Added new sections: [cyan]{', '.join(sorted(new_keys))}[/cyan]")
+    else:
+        console.print("  Config already up to date — no new sections added.")
+
+    console.print(f"  [green]Config upgraded at {config_path}[/green]")
     return config_path
 
 

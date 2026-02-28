@@ -53,7 +53,7 @@ social-plugin/
 │   ├── social_plugin.db         # SQLite database (gitignored)
 │   ├── cache/                   # Downloaded docs/images
 │   └── logs/                    # Rotating log files
-├── tests/                       # 45 tests (config, db, drafts, safety, prompts)
+├── tests/                       # 99 tests (config, db, drafts, safety, prompts, upgrade)
 ├── .github/workflows/           # CI: test.yml + publish.yml (TestPyPI → PyPI)
 ├── pyproject.toml               # PyPI metadata, deps, entry points
 ├── LICENSE                      # MIT
@@ -67,6 +67,7 @@ social-plugin/
 
 ```bash
 social-plugin init                   # Interactive setup wizard
+social-plugin init --upgrade         # Upgrade existing config with new defaults (preserves settings)
 social-plugin config --show          # Show config paths and active provider
 social-plugin fetch-trends           # Fetch trending topics from RSS feeds
 social-plugin fetch-sources          # Read configured Google Docs, PDFs, local files
@@ -228,6 +229,7 @@ git push --tags
 - **User rules (DO/DON'T)** — persistent content rules in config with sensible defaults; injected into system prompts via `build_rules_section()`
 - **Style examples (few-shot)** — user pastes 2-3 example posts in config; injected into user prompts for voice/style matching
 - **Feedback loop** — mandatory rejection reasons + optional approval notes stored in DB; recent feedback fed to LLM via `get_recent_rejection_notes()` / `get_recent_approval_notes()`
+- **Config migration** — `init --upgrade` non-destructively adds new config sections via `_deep_merge`; creates `.yaml.bak` backup; `config_version` field tracks schema version; old configs always work via in-memory merge with `_DEFAULT_CONFIG`
 
 ## Usage Model
 
