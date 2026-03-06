@@ -21,6 +21,15 @@ def _read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="replace")
 
 
+def _is_garbled(text: str) -> bool:
+    """Detect garbled PDF extraction (high ratio of private-use unicode chars)."""
+    if not text:
+        return True
+    private_use = sum(1 for c in text if '\uE000' <= c <= '\uF8FF')
+    printable = sum(1 for c in text if c.isprintable() and not '\uE000' <= c <= '\uF8FF')
+    return private_use > printable
+
+
 def _read_pdf(path: Path) -> str:
     """Extract text from a PDF file."""
     import pdfplumber
@@ -31,7 +40,15 @@ def _read_pdf(path: Path) -> str:
             page_text = page.extract_text()
             if page_text:
                 text_parts.append(page_text)
-    return "\n\n".join(text_parts)
+    text = "\n\n".join(text_parts)
+    if _is_garbled(text):
+        logger.warning(
+            "PDF '%s' has unreadable text (custom fonts/encoding). "
+            "Save the content as a .txt or .md file in the same folder instead.",
+            path.name,
+        )
+        return ""
+    return text
 
 
 def _read_docx(path: Path) -> str:

@@ -42,7 +42,7 @@ generation:
     count_per_run: 1
     style: "concise insight with relevant hashtag"
   linkedin_post:
-    max_length: 3000
+    max_length: 1500
     count_per_run: 1
     style: "thought-leadership, conversational, uses line breaks, ends with a question"
 

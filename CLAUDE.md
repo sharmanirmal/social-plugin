@@ -230,6 +230,9 @@ git push --tags
 - **Style examples (few-shot)** — user pastes 2-3 example posts in config; injected into user prompts for voice/style matching
 - **Feedback loop** — mandatory rejection reasons + optional approval notes stored in DB; recent feedback fed to LLM via `get_recent_rejection_notes()` / `get_recent_approval_notes()`
 - **Config migration** — `init --upgrade` non-destructively adds new config sections via `_deep_merge`; creates `.yaml.bak` backup; `config_version` field tracks schema version; old configs always work via in-memory merge with `_DEFAULT_CONFIG`
+- **Source-first prompts** — source documents are primary content driver (up to 5 sources, 1000 chars each); trends are secondary context (up to 3, 150 chars each); sources appear first in the user prompt
+- **Garbled PDF detection** — `_is_garbled()` checks for private-use unicode chars (U+E000–U+F8FF); warns and returns empty string instead of storing garbage; affects both `local_reader.py` and `pdf_reader.py`
+- **Publisher status preservation** — auto-regenerated tweets re-approve after `update_content()` to prevent `mark_posted()` from failing on status mismatch
 
 ## Usage Model
 

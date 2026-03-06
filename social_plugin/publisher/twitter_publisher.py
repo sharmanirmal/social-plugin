@@ -115,6 +115,8 @@ class TwitterPublisher:
                 if regenerated:
                     text = regenerated
                     self.draft_manager.update_content(draft.id, text, draft.hashtags)
+                    # Re-approve since update_content resets status to pending
+                    self.draft_manager.approve(draft.id)
                     logger.info("Auto-regenerated tweet to fit %d-char limit", char_limit)
                 else:
                     logger.error(

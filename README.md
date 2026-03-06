@@ -147,6 +147,8 @@ Generated content benefits from several quality features:
 - **Meaningful rewrites** — `review` choice 3 (add context) and `regen` produce genuinely different posts, not minor rewordings
 - **Source warnings** — warns when no reference documents are available, suggests adding docs for richer content
 - **X.com + Twitter feed support** — trend discovery works with both x.com and twitter.com RSS feeds
+- **Source-first generation** — reference documents drive content; trends provide context, not headlines
+- **Garbled PDF detection** — warns when a PDF has unreadable fonts and suggests saving as `.txt` instead
 
 ### Draft Lifecycle
 

@@ -13,7 +13,9 @@ Guidelines:
 - Be insightful and thought-provoking, not generic
 - Use a {tone} tone
 - Include 1-2 relevant hashtags from: {hashtags}
-- Reference specific trends or findings when possible
+- Ground your post in specific facts, data, or insights from the reference documents provided
+- Use trending topics only as context — do NOT write promotional or event-advertisement content
+- Share a technical opinion or insight, not a summary of an event or announcement
 - No emojis unless they add genuine value
 - {compliance_note}
 
@@ -31,7 +33,9 @@ Guidelines:
 - Use a {tone} tone
 - Use line breaks for readability (LinkedIn rewards this)
 - Start with a hook that grabs attention
-- Include personal perspective or insight
+- Ground your post in specific facts, data, or insights from the reference documents provided
+- Use trending topics only as context — do NOT write promotional or event-advertisement content
+- Share a technical opinion or original perspective, not a summary of an event or announcement
 - End with a question to drive comments
 - Include 2-3 relevant hashtags from: {hashtags}
 - {compliance_note}
@@ -43,9 +47,9 @@ Output ONLY the post text, nothing else. No quotes, no labels, no explanations."
 USER_PROMPT_TEMPLATE = """\
 Create a {platform} post about {topic}.
 
-{trends_section}
-
 {sources_section}
+
+{trends_section}
 
 {style_section}
 
@@ -156,38 +160,50 @@ def build_user_prompt(
     rejection_feedback: list[str] | None = None,
     approval_feedback: list[str] | None = None,
 ) -> str:
-    # Trends section (with URLs)
-    if trends:
-        trend_lines = []
-        for t in trends[:5]:
-            line = f"- {t.get('title', '')}"
-            if t.get("summary"):
-                line += f": {t['summary'][:200]}"
-            if t.get("url"):
-                line += f" ({t['url']})"
-            trend_lines.append(line)
-        trends_section = "Recent trending topics:\n" + "\n".join(trend_lines)
-    else:
-        trends_section = f"No specific trends available — write about a general {topic} topic."
-
-    # Sources section (with source paths/URLs)
+    # Sources section — PRIMARY content driver (with source paths/URLs)
     if sources:
         source_lines = []
-        for s in sources[:3]:
-            content = s.get("content", "")[:500]
+        for s in sources[:5]:
+            content = (s.get("content") or "").strip()
+            if not content:
+                continue
+            content = content[:1000]
             title = s.get("title", "Source")
             source_path = s.get("source_path", "")
             if source_path:
                 source_lines.append(f"--- {title} (source: {source_path}) ---\n{content}")
             else:
                 source_lines.append(f"--- {title} ---\n{content}")
-        sources_section = "Reference material:\n" + "\n\n".join(source_lines)
+        sources_section = (
+            "PRIMARY REFERENCE MATERIAL — base your post on insights from these documents:\n"
+            + "\n\n".join(source_lines)
+            + "\n\nIMPORTANT: Draw specific facts, data points, or technical insights from "
+            "the above sources. Your post should reflect expertise from these documents, "
+            "not just echo trending headlines."
+        )
     else:
         sources_section = (
             "Note: No reference documents available. Content will be based on trends "
             "and general knowledge only. For richer, more specific posts, add source "
             "documents via 'social-plugin fetch-sources'."
         )
+
+    # Trends section — secondary context (with URLs)
+    if trends:
+        trend_lines = []
+        for t in trends[:3]:
+            line = f"- {t.get('title', '')}"
+            if t.get("summary"):
+                line += f": {t['summary'][:150]}"
+            if t.get("url"):
+                line += f" ({t['url']})"
+            trend_lines.append(line)
+        trends_section = (
+            "Trending topics for context (use as background context, not as the main subject):\n"
+            + "\n".join(trend_lines)
+        )
+    else:
+        trends_section = f"No specific trends available — write about a general {topic} topic."
 
     # Style examples section
     if style_examples:

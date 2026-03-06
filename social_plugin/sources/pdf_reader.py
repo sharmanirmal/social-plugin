@@ -24,6 +24,15 @@ class PDFReader:
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
+    @staticmethod
+    def _is_garbled(text: str) -> bool:
+        """Detect garbled extraction (high ratio of private-use unicode chars)."""
+        if not text:
+            return True
+        private_use = sum(1 for c in text if '\uE000' <= c <= '\uF8FF')
+        printable = sum(1 for c in text if c.isprintable() and not '\uE000' <= c <= '\uF8FF')
+        return private_use > printable
+
     def _extract_text(self, pdf_path: str | Path) -> str:
         """Extract text from a PDF file."""
         text_parts: list[str] = []
@@ -32,7 +41,15 @@ class PDFReader:
                 page_text = page.extract_text()
                 if page_text:
                     text_parts.append(page_text)
-        return "\n\n".join(text_parts)
+        text = "\n\n".join(text_parts)
+        if self._is_garbled(text):
+            logger.warning(
+                "PDF '%s' has unreadable text (custom fonts/encoding). "
+                "Save the content as a .txt or .md file in the same folder instead.",
+                Path(pdf_path).name,
+            )
+            return ""
+        return text
 
     @with_retry(max_attempts=3, retry_on=(httpx.HTTPError, ConnectionError))
     def _download_pdf(self, url: str) -> Path:
